@@ -68,6 +68,12 @@ export interface components {
       /** Image Uri */
       image_uri: string | null;
     };
+    /** AssetInfo */
+    AssetInfo: {
+      asset: components['schemas']['Asset'];
+      /** Versions */
+      versions: components['schemas']['Version'][];
+    };
     /** Body_new_asset_version_api_v1_assets__uuid__versions_post */
     Body_new_asset_version_api_v1_assets__uuid__versions_post: {
       /**
@@ -75,11 +81,6 @@ export interface components {
        * Format: binary
        */
       file: string;
-      /**
-       * Is Major
-       * @default false
-       */
-      is_major?: boolean;
     };
     /** HTTPValidationError */
     HTTPValidationError: {
@@ -97,13 +98,13 @@ export interface components {
     };
     /** Version */
     Version: {
+      /** Message */
+      message: string;
       /**
        * Asset Id
        * Format: uuid
        */
       asset_id: string;
-      /** File Key */
-      file_key: string;
       /** Semver */
       semver: string;
       /** Author Pennkey */
@@ -199,7 +200,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          'application/json': components['schemas']['Asset'];
+          'application/json': components['schemas']['AssetInfo'];
         };
       };
       /** @description Not found */
@@ -278,6 +279,10 @@ export interface operations {
   /** Upload a new version for a given asset */
   new_asset_version_api_v1_assets__uuid__versions_post: {
     parameters: {
+      query: {
+        message: string;
+        is_major?: boolean;
+      };
       path: {
         uuid: string;
       };

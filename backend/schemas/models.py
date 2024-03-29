@@ -22,11 +22,15 @@ class Asset(AssetBase):
 
 
 class VersionBase(BaseModel):
-    asset_id: UUID
-    file_key: str
+    message: str
+
+
+class VersionCreate(VersionBase):
+    is_major: bool
 
 
 class Version(VersionBase):
+    asset_id: UUID
     semver: str
     author_pennkey: str
 

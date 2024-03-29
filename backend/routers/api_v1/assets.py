@@ -1,11 +1,20 @@
 from typing import Annotated, Literal, Sequence
 from uuid import UUID
 from fastapi import APIRouter, Body, Depends, File, Form, HTTPException, UploadFile
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from util.crud import create_asset, create_version, read_assets, read_asset_info
+from util.crud import (
+    AssetInfo,
+    create_asset,
+    create_version,
+    read_asset_versions,
+    read_assets,
+    read_asset_info,
+    update_asset,
+)
 from database.connection import get_db
-from schemas.models import Asset, AssetCreate, Version
+from schemas.models import Asset, AssetCreate, Version, VersionCreate
 from util.files import save_upload_file_temp
 
 router = APIRouter(
@@ -28,7 +37,7 @@ test_version = Version(
     author_pennkey="benfranklin",
     asset_id=test_uuid,
     semver="0.1",
-    file_key="123456",
+    message="Initial version",
 )
 
 
@@ -59,13 +68,13 @@ async def new_asset(asset: AssetCreate, db: Session = Depends(get_db)) -> Asset:
     return create_asset(db, asset, "benfranklin")
 
 
-# TODO: add relatedAssets
+# TODO: add relatedAssets maybe
 @router.get(
     "/{uuid}",
     summary="Get info about a specific asset",
     description="Based on `uuid`, fetches information on a specific asset.",
 )
-def get_asset_info(uuid: str, db: Session = Depends(get_db)) -> Asset:
+def get_asset_info(uuid: str, db: Session = Depends(get_db)) -> AssetInfo:
     result = read_asset_info(db, uuid)
     if result is None:
         raise HTTPException(status_code=404, detail="Asset not found")
@@ -78,10 +87,10 @@ async def put_asset(
     asset: AssetCreate,
     db: Session = Depends(get_db),
 ):
-    # TODO
-    if uuid != test_uuid:
+    result = update_asset(db, uuid, asset)
+    if result is None:
         raise HTTPException(status_code=404, detail="Asset not found")
-    pass
+    return result
 
 
 @router.get("/{uuid}/versions", summary="Get a list of versions for a given asset")
@@ -91,10 +100,7 @@ def get_asset_versions(
     offset: int = 0,
     db: Session = Depends(get_db),
 ) -> Sequence[Version]:
-    # TODO
-    if uuid != test_uuid:
-        raise HTTPException(status_code=404, detail="Asset not found")
-    return [test_version]
+    return read_asset_versions(db, uuid, sort, offset)
 
 
 @router.get("/{uuid}/versions/{semver}", summary="Get a specific version of an asset")
@@ -113,13 +119,20 @@ def get_version(
 def new_asset_version(
     uuid: str,
     file: Annotated[UploadFile, File()],
-    is_major: Annotated[bool, Form()] = False,
+    message: str,
+    is_major: bool = False,
     db: Session = Depends(get_db),
 ):
     file_path = save_upload_file_temp(file)
     if file_path is None:
         raise HTTPException(status_code=400, detail="File uploaded incorrectly")
-    return create_version(db, uuid, file_path, is_major, "benfranklin")
+    return create_version(
+        db,
+        file_path,
+        uuid,
+        "benfranklin",
+        VersionCreate(message=message, is_major=is_major),
+    )
 
 
 # TODO: get_asset_file

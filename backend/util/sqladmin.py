@@ -7,18 +7,21 @@ from database.models import Asset, Version
 
 class AssetAdmin(ModelView, model=Asset):
     column_list = [
-        Asset.id,
         Asset.asset_name,
         Asset.author_pennkey,
         Asset.keywords,
+        Asset.versions,
     ]
 
 
 class VersionAdmin(ModelView, model=Version):
     column_list = [
         Version.semver,
+        Version.message,
         Version.author_pennkey,
+        Version.date,
         Version.file_key,
+        Version.asset,
     ]
 
 

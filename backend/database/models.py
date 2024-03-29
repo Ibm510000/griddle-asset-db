@@ -1,5 +1,7 @@
 from datetime import datetime
+from typing import Optional
 from uuid import UUID, uuid4
+
 from sqlalchemy import ForeignKey, Uuid, func
 from sqlalchemy.orm import Mapped, mapped_column, declarative_base, relationship
 
@@ -19,7 +21,7 @@ class Asset(Base):
     asset_name: Mapped[str]
     author_pennkey: Mapped[str]
     keywords: Mapped[str]
-    image_uri: Mapped[str]
+    image_uri: Mapped[Optional[str]]
 
     versions: Mapped[list["Version"]] = relationship(back_populates="asset")
 
