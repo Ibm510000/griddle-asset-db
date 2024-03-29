@@ -55,7 +55,7 @@ def get_assets(
     summary="Create a new asset, not including initial version",
     description="Creating a new asset in the database. Does not include initial version -- followed up with POST to `/assets/{uuid}` to upload an initial version.",
 )
-def new_asset(asset: AssetCreate, db: Session = Depends(get_db)) -> Asset:
+async def new_asset(asset: AssetCreate, db: Session = Depends(get_db)) -> Asset:
     return create_asset(db, asset, "benfranklin")
 
 
@@ -65,7 +65,7 @@ def new_asset(asset: AssetCreate, db: Session = Depends(get_db)) -> Asset:
     summary="Get info about a specific asset",
     description="Based on `uuid`, fetches information on a specific asset.",
 )
-async def get_asset_info(uuid: str, db: Session = Depends(get_db)) -> Asset:
+def get_asset_info(uuid: str, db: Session = Depends(get_db)) -> Asset:
     result = read_asset_info(db, uuid)
     if result is None:
         raise HTTPException(status_code=404, detail="Asset not found")
@@ -85,7 +85,7 @@ async def put_asset(
 
 
 @router.get("/{uuid}/versions", summary="Get a list of versions for a given asset")
-async def get_asset_versions(
+def get_asset_versions(
     uuid: str,
     sort: Literal["asc", "desc"] = "desc",
     offset: int = 0,
@@ -98,7 +98,7 @@ async def get_asset_versions(
 
 
 @router.get("/{uuid}/versions/{semver}", summary="Get a specific version of an asset")
-async def get_version(
+def get_version(
     uuid: str,
     semver: str,
     db: Session = Depends(get_db),
@@ -110,7 +110,7 @@ async def get_version(
 
 
 @router.post("/{uuid}/versions", summary="Upload a new version for a given asset")
-async def new_asset_version(
+def new_asset_version(
     uuid: str,
     file: Annotated[UploadFile, File()],
     is_major: Annotated[bool, Form()] = False,

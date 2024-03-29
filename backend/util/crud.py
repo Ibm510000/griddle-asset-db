@@ -13,7 +13,7 @@ from util.s3 import assets_bucket
 
 
 def read_asset(db: Session, asset_id: str):
-    return db.query(Asset).filter(Asset.id == asset_id).first()
+    return db.execute(select(Asset.filter(Asset.id == asset_id)).limit(1)).first()
 
 
 def read_assets(db: Session, search: str | None = None, offset=0):
@@ -38,7 +38,11 @@ def create_asset(db: Session, asset: AssetCreate, author_pennkey: str):
 
 
 def read_asset_info(db: Session, asset_id: str):
-    return db.query(Asset).filter(Asset.id == asset_id).first()
+    return (
+        db.execute(select(Asset).filter(Asset.id == asset_id).limit(1))
+        .scalars()
+        .first()
+    )
 
 
 # TODO: get_asset_versions
@@ -46,14 +50,18 @@ def read_asset_info(db: Session, asset_id: str):
 
 # TODO: download asset to temp directory then return file response
 def read_version_file(db: Session, asset_id: str, semver: str):
-    file = (
-        db.query(Version)
-        .filter(Version.asset_id == asset_id, Version.semver == semver)
+    version = (
+        db.execute(
+            select(Version)
+            .filter(Version.asset_id == asset_id, Version.semver == semver)
+            .limit(1)
+        )
+        .scalars()
         .first()
     )
-    if file is None:
+    if version is None:
         return None
-    return file.file_key
+    return version.file_key
 
 
 def create_version(

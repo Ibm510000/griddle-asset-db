@@ -1,8 +1,6 @@
 import os
 import boto3
 
-
-# troll test
 s3 = boto3.resource(
     "s3",
     endpoint_url=os.getenv("AWS_ENDPOINT_URL"),

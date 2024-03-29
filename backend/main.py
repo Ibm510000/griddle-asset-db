@@ -1,21 +1,33 @@
-# NOTE: we gotta keep this as first import so other files can use `os.getenv`
-from settings import is_dev
+from settings import DATABASE_URI, is_dev
 
 from fastapi import FastAPI
+from fastapi.concurrency import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
+from alembic.config import Config
+from alembic import command
 
-from database import models
-from database.connection import engine
-
-from routers.sqladmin import config_sqladmin
 from routers.api_v1 import router as api_v1_router
+from util.sqladmin import config_sqladmin
 
-models.Base.metadata.create_all(bind=engine)
 
-# TODO: implement alembic to manage migrations
+def init_db():
+    alembic_cfg = Config("alembic.ini")
+    alembic_cfg.set_main_option("sqlalchemy.url", DATABASE_URI)
+    command.upgrade(alembic_cfg, "head")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # this stuff runs on startup
+    init_db()
+
+    yield
+    # this stuff runs on shutdown
+
 
 app = FastAPI()
 
+# TODO: figure out allowing any electron frontend
 origins = ["http://localhost:5173"]
 
 app.add_middleware(

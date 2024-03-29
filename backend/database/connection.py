@@ -1,13 +1,10 @@
-import os
+from settings import DATABASE_URI
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URI")
 
-if SQLALCHEMY_DATABASE_URI == None:
-    raise RuntimeError("DATABASE_URI environment variable not provided!")
-
-engine = create_engine(SQLALCHEMY_DATABASE_URI, connect_args={})
+engine = create_engine(DATABASE_URI, connect_args={})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
