@@ -16,13 +16,7 @@ def init_db():
     command.upgrade(alembic_cfg, "head")
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # this stuff runs on startup
-    init_db()
-
-    yield
-    # this stuff runs on shutdown
+init_db()
 
 
 app = FastAPI()
