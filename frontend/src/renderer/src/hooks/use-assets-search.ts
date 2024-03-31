@@ -17,7 +17,7 @@ export const useSearchParamsStore = create<SearchParamsState>((set) => ({
   setSearch: (query: string) => set((state) => ({ ...state, search: query })),
 }));
 
-const getKey = () => {
+const useKey = () => {
   const searchParams = useSearchParamsStore();
   // debounce so we don't refetch every 20 ms
   const debouncedParams = useDebounce(searchParams, 200);
@@ -27,7 +27,7 @@ const getKey = () => {
 
 export function useAssetsSearch() {
   const { data, error, isLoading, isValidating, mutate } = useSWR(
-    getKey(),
+    useKey(),
     async ([url, { search, keywords }]) => {
       const { data, error, response } = await fetchClient.GET(url, {
         params: {
@@ -53,8 +53,9 @@ export function useAssetsSearch() {
 
 export function useAssetsSearchRefetch() {
   const { mutate } = useSWRConfig();
+  const key = useKey();
 
   return async () => {
-    await mutate(getKey());
+    await mutate(key);
   };
 }

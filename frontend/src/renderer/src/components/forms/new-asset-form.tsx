@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 
 import { useAssetsSearchRefetch } from '@renderer/hooks/use-assets-search';
 import fetchClient from '@renderer/lib/fetch-client';
+import { encodeThumbnailImage } from '@renderer/lib/image-util';
 
 export interface NewAssetFormData {
   assetName: string;
@@ -17,54 +17,26 @@ export default function NewAssetForm({
   afterSubmit?: SubmitHandler<NewAssetFormData>;
 }) {
   const refetchSearch = useAssetsSearchRefetch();
-  const { register, handleSubmit } = useForm<NewAssetFormData>();
+  const { register, control, handleSubmit } = useForm<NewAssetFormData>({
+    defaultValues: { assetFiles: [], assetName: '', keywords: '', thumbnailFile: undefined },
+  });
 
-  // Handle state for assetFiles and thumbnail file
-  const [assetFiles, setAssetFiles] = useState<File[]>([]);
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-
-  // --------- Functions to handle asset file input/drop -----------------------
-  const handleAssetFileDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const droppedFiles = Array.from(event.dataTransfer.files);
-    setAssetFiles((prevFiles) => [...prevFiles, ...droppedFiles]);
-  };
-
-  const handleAssetFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(event.target.files || []);
-    setAssetFiles((prevFiles) => [...prevFiles, ...selectedFiles]);
-  };
-
-  const handleRemoveAssetFile = (index: number) => {
-    setAssetFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
-  };
-
-  // --------- Functions to handle thumbnail file input/drop -----------------------
-  const handleThumbnailFileDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const droppedFile = event.dataTransfer.files[0];
-    setThumbnailFile(droppedFile);
-  };
-
-  const handleThumbnailFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files && event.target.files[0];
-    setThumbnailFile(selectedFile || null);
-  };
-
-  const handleRemoveThumbnailFile = () => {
-    setThumbnailFile(null);
-  };
-
-  // --------------------------------------------------------
   const submitHandler = async (data: NewAssetFormData) => {
+    let image_uri;
+    try {
+      image_uri = await encodeThumbnailImage(await data.thumbnailFile!.arrayBuffer());
+    } catch (err) {
+      // TODO: toast
+      console.error('Error encoding thumbnail image:', err);
+      return;
+    }
+
     // Calling fetchClient.POST()
     const { response, error } = await fetchClient.POST('/api/v1/assets/', {
       body: {
         asset_name: data.assetName,
         keywords: data.keywords,
-        image_uri:
-          'data:image/jpg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wEEEACFAIUAhQCFAI4AhQCWAKcApwCWANAA4QDIAOEA0AE0ARsBAgECARsBNAHSAU0BZgFNAWYBTQHSAsQBuQIEAbkBuQIEAbkCxAJxAvYCaAI/AmgC9gJxBGUDcwMPAw8DcwRlBRMEQwQJBEMFEwYmBYAFgAYmB78HWwe/Ch8KHw2aEQCFAIUAhQCFAI4AhQCWAKcApwCWANAA4QDIAOEA0AE0ARsBAgECARsBNAHSAU0BZgFNAWYBTQHSAsQBuQIEAbkBuQIEAbkCxAJxAvYCaAI/AmgC9gJxBGUDcwMPAw8DcwRlBRMEQwQJBEMFEwYmBYAFgAYmB78HWwe/Ch8KHw2a/8IAEQgAZABkAwEiAAIRAQMRAf/EACsAAQADAQAAAAAAAAAAAAAAAAABAgMEAQEBAAAAAAAAAAAAAAAAAAAAAf/aAAwDAQACEAMQAAAAq3HNbQWtIAAAAUtkU6ePqLAAhAsrJCBfn6OMjfAva57pqyxNNMtiEiqwpzaZqAmAmLnRIiUgHGFiLVAJvTU3CSiQDjraqgSC23PqbBEwJQOSBUgAB0yIkAP/xAAfEAACAgMBAQADAAAAAAAAAAABAgAgAxExEDATISL/2gAIAQEAAT8AGMwown9RTCCYPhozkIDxEI+b8mM334ZvzJ4p/V90y+YzVngGhQxjs+AkT8pgyQ5BCxaYxTUd9D4KNCr3Tos3b4+2PZuE0Aids1RORLE7ujfZeV//xAAUEQEAAAAAAAAAAAAAAAAAAABQ/9oACAECAQE/AEf/xAAUEQEAAAAAAAAAAAAAAAAAAABQ/9oACAEDAQE/AEf/2Q==', // data.thumbnailFile.path,
-        // TODO: read image file, encode to base64 datauri
+        image_uri,
       },
     });
 
@@ -75,8 +47,7 @@ export default function NewAssetForm({
     refetchSearch();
 
     // Combine assetFiles from state with form data
-    const formDataWithFiles = { ...data, assetFiles };
-    if (afterSubmit) afterSubmit(formDataWithFiles); // Call the onSubmit function provided by props
+    if (afterSubmit) afterSubmit(data); // Call the onSubmit function provided by props
   };
 
   return (
@@ -106,120 +77,154 @@ export default function NewAssetForm({
         />
       </div>
 
-      <div
-        className="mt-4"
-        onDrop={handleAssetFileDrop}
-        onDragOver={(event) => event.preventDefault()}
-      >
-        <label htmlFor="assetUpload" className="block text-sm font-medium text-gray-700">
-          Upload Asset Files
-        </label>
-        <div className="mt-1 flex justify-center rounded-md border-2 border-dashed border-gray-300 px-6 pb-6 pt-5">
-          <div className="space-y-1 text-center">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              stroke="currentColor"
-              fill="none"
-              viewBox="0 0 48 48"
-              aria-hidden="true"
-            >
-              <path
-                d="M27 4v16h16M27 4l17 17M43 21H5M13 12h22v9l5 4V8l-5 4z"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <div className="flex text-sm text-gray-600">
-              <label
-                htmlFor="asset-upload"
-                className="relative cursor-pointer rounded-md bg-white font-medium text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:text-indigo-500"
-              >
-                <span>Upload Asset files</span>
-                <input
-                  id="asset-upload"
-                  type="file"
-                  className="sr-only"
-                  multiple
-                  {...register('assetFiles', { required: true })}
-                  onChange={handleAssetFileInputChange}
-                />
-              </label>
-              <p className="pl-1">or drag and drop</p>
-            </div>
-            <p className="text-xs text-gray-500">BLEND, MA, HIP, USDA files</p>
-          </div>
-        </div>
-        <div className="mt-2">
-          <ul>
-            {assetFiles.map((file, index) => (
-              <li key={index}>
-                {file.name}{' '}
-                <button
-                  type="button"
-                  onClick={() => handleRemoveAssetFile(index)}
-                  className="text-red-500"
+      <Controller
+        control={control}
+        name="assetFiles"
+        rules={{ required: true }}
+        render={({ field: { value, onChange } }) => (
+          <div
+            className="mt-4"
+            onDrop={(event) => {
+              event.preventDefault();
+              const droppedFiles = Array.from(event.dataTransfer.files);
+              onChange((prevFiles) => [...prevFiles, ...droppedFiles]);
+            }}
+            onDragOver={(event) => event.preventDefault()}
+          >
+            <label htmlFor="assetUpload" className="block text-sm font-medium text-gray-700">
+              Upload Asset Files
+            </label>
+            <div className="mt-1 flex justify-center rounded-md border-2 border-dashed border-gray-300 px-6 pb-6 pt-5">
+              <div className="space-y-1 text-center">
+                <svg
+                  className="mx-auto h-12 w-12 text-gray-400"
+                  stroke="currentColor"
+                  fill="none"
+                  viewBox="0 0 48 48"
+                  aria-hidden="true"
                 >
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      <div
-        className="mt-4"
-        onDrop={handleThumbnailFileDrop}
-        onDragOver={(event) => event.preventDefault()}
-      >
-        <label htmlFor="thumbnailUpload" className="block text-sm font-medium text-gray-700">
-          Upload Thumbnail
-        </label>
-        <div className="mt-1 flex justify-center rounded-md border-2 border-dashed border-gray-300 px-6 pb-6 pt-5">
-          <div className="space-y-1 text-center">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              stroke="currentColor"
-              fill="none"
-              viewBox="0 0 48 48"
-              aria-hidden="true"
-            >
-              <path
-                d="M27 4v16h16M27 4l17 17M43 21H5M13 12h22v9l5 4V8l-5 4z"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <div className="flex text-sm text-gray-600">
-              <label
-                htmlFor="thumbnail-upload"
-                className="relative cursor-pointer rounded-md bg-white font-medium text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:text-indigo-500"
-              >
-                <span>Upload Thumbnail</span>
-                <input
-                  id="thumbnail-upload"
-                  type="file"
-                  className="sr-only"
-                  {...register('thumbnailFile', { required: true })}
-                  onChange={handleThumbnailFileInputChange}
-                />
-              </label>
-              <p className="pl-1">or drag and drop</p>
-            </div>
-            <p className="text-xs text-gray-500">JPG or PNG file</p>
-            {thumbnailFile && (
-              <div>
-                <p className="text-xs text-gray-500">{thumbnailFile.name}</p>
-                <button type="button" onClick={handleRemoveThumbnailFile} className="text-red-500">
-                  Remove
-                </button>
+                  <path
+                    d="M27 4v16h16M27 4l17 17M43 21H5M13 12h22v9l5 4V8l-5 4z"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <div className="flex text-sm text-gray-600">
+                  <label
+                    htmlFor="asset-upload"
+                    className="relative cursor-pointer rounded-md bg-white font-medium text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:text-indigo-500"
+                  >
+                    <span>Upload Asset files</span>
+                    <input
+                      id="asset-upload"
+                      type="file"
+                      className="sr-only"
+                      multiple
+                      {...register('assetFiles', { required: true })}
+                      onChange={(event) => {
+                        const selectedFiles = Array.from(event.target.files || []);
+                        onChange((prevFiles) => [...prevFiles, ...selectedFiles]);
+                      }}
+                    />
+                  </label>
+                  <p className="pl-1">or drag and drop</p>
+                </div>
+                <p className="text-xs text-gray-500">BLEND, MA, HIP, USDA files</p>
               </div>
-            )}
+            </div>
+            <div className="mt-2">
+              <ul>
+                {value.map((file, index) => (
+                  <li key={index}>
+                    {file.name}{' '}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onChange((prevFiles) => prevFiles.filter((_, i) => i !== index));
+                      }}
+                      className="text-red-500"
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
-        </div>
-      </div>
+        )}
+      />
+
+      <Controller
+        control={control}
+        name="thumbnailFile"
+        rules={{ required: true }}
+        render={({ field: { value, onChange, ref } }) => (
+          <div
+            className="mt-4"
+            onDrop={(event) => {
+              event.preventDefault();
+              const droppedFile = event.dataTransfer.files[0];
+              onChange(droppedFile);
+            }}
+            onDragOver={(event) => event.preventDefault()}
+          >
+            <label htmlFor="thumbnailUpload" className="block text-sm font-medium text-gray-700">
+              Upload Thumbnail
+            </label>
+            <div className="mt-1 flex justify-center rounded-md border-2 border-dashed border-gray-300 px-6 pb-6 pt-5">
+              <div className="space-y-1 text-center">
+                <svg
+                  className="mx-auto h-12 w-12 text-gray-400"
+                  stroke="currentColor"
+                  fill="none"
+                  viewBox="0 0 48 48"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M27 4v16h16M27 4l17 17M43 21H5M13 12h22v9l5 4V8l-5 4z"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <div className="flex text-sm text-gray-600">
+                  <label
+                    htmlFor="thumbnail-upload"
+                    className="relative cursor-pointer rounded-md bg-white font-medium text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:text-indigo-500"
+                  >
+                    <span>Upload Thumbnail</span>
+                    <input
+                      id="thumbnail-upload"
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      ref={ref}
+                      onChange={(event) => {
+                        onChange(event.target.files?.[0]);
+                      }}
+                    />
+                  </label>
+                  <p className="pl-1">or drag and drop</p>
+                </div>
+                <p className="text-xs text-gray-500">Image file</p>
+                {value && (
+                  <div>
+                    <p className="text-xs text-gray-500">{value.name}</p>
+                    <button
+                      type="button"
+                      onClick={() => onChange(undefined)}
+                      className="text-red-500"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      />
       <div className="mt-4">
         <button
           type="submit"

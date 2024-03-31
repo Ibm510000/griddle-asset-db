@@ -13,7 +13,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar flex select-none items-center justify-between border-black p-7 shadow-md">
+    <nav className="navbar z-10 flex select-none items-center justify-between border-black p-7 shadow-md">
       {/* Logo Placeholder */}
       <div className="logo">
         <a className="btn btn-ghost text-xl">Griddle</a>
