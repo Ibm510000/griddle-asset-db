@@ -6,10 +6,10 @@ export default function NewAssetView() {
   return (
     <>
       {/* TODO: add transition animation */}
-      <div className="absolute inset-0 bg-black/20" />
-      <div className="absolute inset-0" onClick={() => navigate('/')}>
+      <div className="absolute inset-0 z-10 bg-black/20" />
+      <div className="absolute inset-0 z-10 overflow-y-auto" onClick={() => navigate('/')}>
         <div
-          className="mx-auto mt-6 w-full max-w-xl rounded-lg bg-base-100 px-6 py-4 shadow-lg"
+          className="mx-auto my-6 w-full max-w-xl rounded-lg bg-base-100 px-6 py-4 shadow-lg"
           onClick={(evt) => evt.stopPropagation()}
         >
           <h1 className="text-2xl font-semibold">Create New Asset</h1>
