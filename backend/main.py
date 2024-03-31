@@ -16,10 +16,16 @@ def init_db():
     command.upgrade(alembic_cfg, "head")
 
 
-init_db()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Pre-startup code
+    init_db()
+    yield
+    # Post-shutdown code
+    pass
 
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 # TODO: figure out allowing any electron frontend
 origins = ["http://localhost:5173"]
