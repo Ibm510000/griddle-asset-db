@@ -47,7 +47,7 @@ const NavbarFilter = ({ onApply }: { onApply: (filters: AssetFilters) => void })
             className="input input-sm input-bordered w-full focus:border-primary focus:ring-1 focus:ring-primary"
           />
         </li>
-        <li className="menu-item mb-2">
+        <li className="menu-item mb-4">
           <input
             type="text"
             placeholder="By Keywords"
@@ -56,19 +56,27 @@ const NavbarFilter = ({ onApply }: { onApply: (filters: AssetFilters) => void })
             className="input input-sm input-bordered w-full focus:border-primary focus:ring-1 focus:ring-primary"
           />
         </li>
-        <div className="mb-2 flex gap-2">
-          <input
-            type="date"
-            value={dateRange.start}
-            onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-            className="input input-bordered w-full focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          />
-          <input
-            type="date"
-            value={dateRange.end}
-            onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-            className="input input-bordered w-full focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          />
+        <div className="mb-4 flex flex-col">
+          <div className="flex gap-2">
+            <div className="flex w-full flex-col">
+              <label className="mb-1 text-sm font-medium opacity-90">Start Date</label>
+              <input
+                type="date"
+                value={dateRange.start}
+                onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+                className="input input-bordered w-full focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <div className="flex w-full flex-col">
+              <label className="mb-1 text-sm font-medium opacity-90">End Date</label>
+              <input
+                type="date"
+                value={dateRange.end}
+                onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+                className="input input-bordered w-full focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          </div>
         </div>
         <li>
           <button
