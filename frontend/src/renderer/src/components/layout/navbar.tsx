@@ -34,6 +34,11 @@ const Navbar = () => {
         <Link className="btn btn-outline" to={'/new-asset'}>
           + New Asset
         </Link>
+        
+        {/* Update Asset Button */}
+        {/* <Link className="btn btn-outline" to={'/update-asset'}>
+          + Update Asset
+        </Link> */}
 
         {/* Search Bar */}
         <div className="form-control relative w-1/3">

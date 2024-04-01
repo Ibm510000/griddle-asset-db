@@ -30,7 +30,7 @@ function OldAssetForm(): JSX.Element {
   };
 
   const handleRemoveAssetFile = (index: number) => {
-    setAssetFiles((prevFiles) => prevFiles.filter((file, i) => i !== index));
+    setAssetFiles((prevFiles) => prevFiles.filter((_file, i) => i !== index));
   };
 
   const handleRemoveThumbnailFile = () => {

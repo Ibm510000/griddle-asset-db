@@ -5,6 +5,7 @@ import ReactDOM from 'react-dom/client';
 import HomeView from './routes/home-view';
 import { RouterProvider, createHashRouter } from 'react-router-dom';
 import NewAssetView from './routes/new-asset-view';
+import UpdateAssetView from './routes/update-asset-view';
 
 const router = createHashRouter([
   {
@@ -14,6 +15,10 @@ const router = createHashRouter([
       {
         path: 'new-asset',
         element: <NewAssetView />,
+      },
+      {
+        path: 'update-asset',
+        element: <UpdateAssetView />,
       },
     ],
   },
