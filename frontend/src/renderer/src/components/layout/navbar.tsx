@@ -1,11 +1,20 @@
-import { CiSearch } from 'react-icons/ci';
-
+import { useEffect, useState } from 'react';
 import NavbarFilter, { AssetFilters } from './navbar-filter';
 import { Link } from 'react-router-dom';
 import { useSearchParamsStore } from '@renderer/hooks/use-assets-search';
+import { themeChange } from 'theme-change';
+import ThemeSelector from './theme-selector';
+
+import { CiSearch } from 'react-icons/ci';
 
 const Navbar = () => {
+  const [selectedTheme, setSelectedTheme] = useState('light'); // default theme
+
   const { search, setSearch } = useSearchParamsStore();
+
+  useEffect(() => {
+    themeChange(false);
+  }, []);
 
   const handleApplyFilters = (filters: AssetFilters) => {
     console.log('Applying filters:', filters);
@@ -41,6 +50,8 @@ const Navbar = () => {
         {/* Filter Component */}
         <NavbarFilter onApply={handleApplyFilters} />
       </div>
+
+      <ThemeSelector selectedTheme={selectedTheme} setSelectedTheme={setSelectedTheme} />
 
       {/* Placeholder for Right-Side Content */}
       <div>{/* Content such as profile menu or additional buttons could go here */}</div>
