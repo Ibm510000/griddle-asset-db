@@ -12,8 +12,10 @@ import { Asset } from '@renderer/types';
 import { syncAsset } from '@renderer/lib/util';
 
 export default function Metadata() {
-  const { asset } = useSelectedAsset();
+
+  const { asset, versions } = useSelectedAsset();
   const { downloadedVersions, mutate } = useDownloads();
+
   // versions also available here for showing asset versions!
 
   const isDownloaded = useMemo(() => {
@@ -124,7 +126,7 @@ export default function Metadata() {
 
   if (!asset) {
     return (
-      <div>
+      <div className="flex h-full flex-col px-6 py-4">
         <div className="text-lg">Metadata</div>
         <div>Please select an asset</div>
       </div>
@@ -133,11 +135,11 @@ export default function Metadata() {
 
   // If an asset is selected, render its information
   return (
-    <div>
-      <div className="flex">
-        <div className="text-lg">Metadata</div>
+    <div className="flex h-full flex-col px-6 py-4">
+      <div className="flex items-center gap-3">
+        <div className="text-base-content/50">Metadata</div>
         {!editMode && (
-          <button onClick={handleEditClick}>
+          <button onClick={handleEditClick} className="btn btn-ghost btn-sm">
             <CiEdit className="h-4 w-4" />
           </button>
         )}
@@ -240,21 +242,32 @@ export default function Metadata() {
         </>
       ) : (
         <>
-          <div className="block text-sm font-medium text-gray-700">
-            {' '}
-            Asset Name: {asset.asset_name}
+        <div className='flex flex-col space-y-4'>
+          <div className="mt-2 text-2xl font-bold leading-tight tracking-tight text-base-content">
+            {asset.asset_name}
           </div>
-          <div className="block text-sm font-medium text-gray-700">Keywords: {asset.keywords}</div>
-          <div className="block text-sm font-medium text-gray-700">
-            Author: {asset.author_pennkey}
+          <div className="mt-2 font-medium text-base-content">Keywords: 
+            <div className='mt-2 flex flex-row flex-wrap gap-1'>
+              {asset.keywords?.split(',').map((keyword) => (
+                <span key={keyword} className="rounded bg-primary/90 px-2 py-1 mr-2 my-auto text-primary-content/100">
+                  {keyword}
+                </span>
+              ))}
+            </div>
           </div>
-          {asset.image_uri && (
-            <img
-              src={asset.image_uri}
-              alt={asset.asset_name}
-              className="mb-2 aspect-square w-full rounded-lg bg-base-300"
-            />
-          )}
+          <div className="font-medium text-base-content/90 flex flex-col">Author: 
+            <div className='font-bold text-base-content'>{asset.author_pennkey}</div>
+            </div>
+          <div className="max-h-60 overflow-y-auto">
+            <div className='flex flex-col' > Versions:
+            {versions?.map((version) => (
+              <div key={version.asset_id} className="flex flex-row">
+                <div className="text-base-content">{version.semver}:</div>
+                <div className="text-base-content/50 pl-2 mt-auto">{version.date.split("T")[0]}</div>
+              </div>
+            ))}
+            </div>
+          </div>
           {!isDownloaded && (
             <button
               className="btn btn-outline btn-primary mt-2 flex flex-row items-center gap-2"
@@ -291,6 +304,14 @@ export default function Metadata() {
                 Unsync
               </button>
             </>
+          )}
+          </div>
+          {asset.image_uri && (
+            <img
+              src={asset.image_uri}
+              alt={asset.asset_name}
+              className="mt-auto aspect-square w-full rounded-lg bg-base-300"
+            />
           )}
         </>
       )}

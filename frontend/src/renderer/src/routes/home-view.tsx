@@ -30,7 +30,7 @@ function HomeView(): JSX.Element {
             <AssetList />
           </div>
           <div className="relative border-l-[1px] border-base-content/20">
-            <div className="absolute inset-0 px-6 py-4">
+            <div className="absolute inset-0">
               {/* Asset metadata panel */}
               <Metadata />
             </div>
