@@ -31,9 +31,9 @@ const messageHandlers: MessageHandlers = {
     await removeVersion({ asset_id, semver });
     return { ok: true };
   },
-  'assets:commit-changes': async (_, { asset_id, semver }) => {
+  'assets:commit-changes': async (_, { asset_id, semver, message, is_major }) => {
     console.log(`Committing changes for ${asset_id}@${semver}`);
-    await commitChanges(asset_id, semver);
+    await commitChanges(asset_id, semver, message, is_major);
     return { ok: true };
   },
   'assets:open-folder': async (_, { asset_id, semver }) => {

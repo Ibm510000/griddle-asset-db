@@ -83,18 +83,12 @@ async function zipFolder(sourceFolder: string, zipFilePath: string): Promise<voi
   });
 }
 
-export async function commitChanges(asset_id: string, semver: string | null) {
-  console.log('fetching metadata...');
-  let asset_name;
-  {
-    const { data, error, response } = await fetchClient.GET('/api/v1/assets/{uuid}', {
-      params: { path: { uuid: asset_id } },
-    });
-    if (error || response.status !== 200) {
-      throw new Error(`Failed to fetch metadata for asset ${asset_id}`);
-    }
-    asset_name = data.asset.asset_name;
-  }
+export async function commitChanges(
+  asset_id: string,
+  semver: string | null,
+  message: string,
+  is_major: boolean,
+) {
   const folderName = getStoredVersions().find(
     (v) => v.asset_id === asset_id && v.semver === semver,
   )?.folderName;
@@ -121,8 +115,8 @@ export async function commitChanges(asset_id: string, semver: string | null) {
     params: { path: { uuid: asset_id } },
     body: {
       file: fileData as unknown as string,
-      message: 'New version for ' + asset_name + 'uploaded',
-      is_major: true,
+      message: message,
+      is_major: is_major,
     },
     bodySerializer(body) {
       const formData = new FormData();

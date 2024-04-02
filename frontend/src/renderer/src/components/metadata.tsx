@@ -249,13 +249,13 @@ export default function Metadata() {
                 className="btn btn-outline mt-6"
                 to={{ pathname: `/update-asset`, search: `?id=${asset.id}` }}
               >
-                + Commit Changes
+                Commit Changes
               </Link>
               <button
                 className="btn btn-ghost btn-sm mt-2 flex flex-row flex-nowrap items-center gap-2 text-sm"
                 onClick={onUnsyncClick}
               >
-                <MdSyncDisabled />
+                <MdSyncDisabled className="h-5 w-5" />
                 Unsync
               </button>
             </>

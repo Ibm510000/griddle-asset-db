@@ -34,7 +34,12 @@ export default function UpdateAssetForm({ uuid, afterSubmit }: UpdateAssetFormPr
     }
 
     // Calling fetchClient.POST()
-    await window.api.ipc('assets:commit-changes', { asset_id: uuid, semver: downloaded.semver });
+    await window.api.ipc('assets:commit-changes', {
+      asset_id: uuid,
+      semver: downloaded.semver,
+      message: data.message,
+      is_major: data.is_major,
+    });
 
     await refetchSearch();
 
