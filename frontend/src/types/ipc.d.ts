@@ -25,12 +25,20 @@ type GriddleIpcSchema = {
     request: { asset_id: string };
     response: { ok: boolean };
   };
+  'assets:create-initial-version': {
+    request: { asset_id: string; asset_name: string };
+    response: { ok: boolean };
+  };
   'assets:download-version': {
     request: { asset_id: string; semver: string };
     response: { ok: boolean };
   };
+  'assets:remove-version': {
+    request: { asset_id: string; semver: string | null };
+    response: { ok: boolean };
+  };
   'assets:commit-changes': {
-    request: { asset_id: string; semver: string };
+    request: { asset_id: string; semver: string | null };
     response: { ok: boolean };
   };
   'assets:open-folder': {

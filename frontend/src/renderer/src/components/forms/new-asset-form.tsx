@@ -3,11 +3,11 @@ import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { useAssetsSearchRefetch } from '@renderer/hooks/use-assets-search';
 import fetchClient from '@renderer/lib/fetch-client';
 import { encodeThumbnailImage } from '@renderer/lib/image-util';
+import useDownloads from '@renderer/hooks/use-downloads';
 
 export interface NewAssetFormData {
   assetName: string;
   keywords: string;
-  assetFiles: File[];
   thumbnailFile: File;
 }
 
@@ -18,8 +18,10 @@ export default function NewAssetForm({
 }) {
   const refetchSearch = useAssetsSearchRefetch();
   const { register, control, handleSubmit } = useForm<NewAssetFormData>({
-    defaultValues: { assetFiles: [], assetName: '', keywords: '', thumbnailFile: undefined },
+    defaultValues: { assetName: '', keywords: '', thumbnailFile: undefined },
   });
+
+  const { mutate: mutateDownloads } = useDownloads();
 
   const submitHandler = async (data: NewAssetFormData) => {
     let image_uri;
@@ -32,7 +34,11 @@ export default function NewAssetForm({
     }
 
     // Calling fetchClient.POST()
-    const { response, error } = await fetchClient.POST('/api/v1/assets/', {
+    const {
+      data: resData,
+      response,
+      error,
+    } = await fetchClient.POST('/api/v1/assets/', {
       body: {
         asset_name: data.assetName,
         keywords: data.keywords,
@@ -44,6 +50,13 @@ export default function NewAssetForm({
     if (!response.status.toString().startsWith('2'))
       throw new Error(`Non-OK response with code ${response.status}: ${response.statusText}`);
 
+    // Create initial version for the asset
+    await window.api.ipc('assets:create-initial-version', {
+      asset_id: resData.id,
+      asset_name: data.assetName,
+    });
+
+    mutateDownloads();
     refetchSearch();
 
     // Combine assetFiles from state with form data
@@ -77,84 +90,7 @@ export default function NewAssetForm({
         />
       </div>
 
-      <Controller
-        control={control}
-        name="assetFiles"
-        rules={{ required: true }}
-        render={({ field: { value, onChange } }) => (
-          <div
-            className="mt-4"
-            onDrop={(event) => {
-              event.preventDefault();
-              const droppedFiles = Array.from(event.dataTransfer.files);
-              onChange((prevFiles) => [...prevFiles, ...droppedFiles]);
-            }}
-            onDragOver={(event) => event.preventDefault()}
-          >
-            <label htmlFor="assetUpload" className="block text-sm font-medium text-gray-700">
-              Upload Asset Files
-            </label>
-            <div className="mt-1 flex justify-center rounded-md border-2 border-dashed border-gray-300 px-6 pb-6 pt-5">
-              <div className="space-y-1 text-center">
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
-                  stroke="currentColor"
-                  fill="none"
-                  viewBox="0 0 48 48"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M27 4v16h16M27 4l17 17M43 21H5M13 12h22v9l5 4V8l-5 4z"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <div className="flex text-sm text-gray-600">
-                  <label
-                    htmlFor="asset-upload"
-                    className="relative cursor-pointer rounded-md bg-white font-medium text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:text-indigo-500"
-                  >
-                    <span>Upload Asset files</span>
-                    <input
-                      id="asset-upload"
-                      type="file"
-                      className="sr-only"
-                      multiple
-                      {...register('assetFiles', { required: true })}
-                      onChange={(event) => {
-                        const selectedFiles = Array.from(event.target.files || []);
-                        onChange((prevFiles) => [...prevFiles, ...selectedFiles]);
-                      }}
-                    />
-                  </label>
-                  <p className="pl-1">or drag and drop</p>
-                </div>
-                <p className="text-xs text-gray-500">BLEND, MA, HIP, USDA files</p>
-              </div>
-            </div>
-            <div className="mt-2">
-              <ul>
-                {value.map((file, index) => (
-                  <li key={index}>
-                    {file.name}{' '}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onChange((prevFiles) => prevFiles.filter((_, i) => i !== index));
-                      }}
-                      className="text-red-500"
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        )}
-      />
-
+      {/* Thumbnail upload controller */}
       <Controller
         control={control}
         name="thumbnailFile"
@@ -225,6 +161,7 @@ export default function NewAssetForm({
           </div>
         )}
       />
+
       <div className="mt-4">
         <button type="submit" className="btn btn-primary">
           Create

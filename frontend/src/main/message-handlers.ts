@@ -1,5 +1,11 @@
 import type { MessageHandlers } from '../types/ipc';
-import { downloadVersion, getStoredVersions, commitChanges } from './lib/local-assets';
+import {
+  commitChanges,
+  createInitialVersion,
+  downloadVersion,
+  getStoredVersions,
+  removeVersion,
+} from './lib/local-assets';
 
 // Types for these can be found in `src/types/ipc.d.ts`
 const messageHandlers: MessageHandlers = {
@@ -12,12 +18,19 @@ const messageHandlers: MessageHandlers = {
     console.log(`Downloading latest version of asset ${asset_id}`);
     return { ok: true };
   },
+  'assets:create-initial-version': async (_, { asset_id, asset_name }) => {
+    await createInitialVersion({ asset_id, asset_name });
+    return { ok: true };
+  },
   'assets:download-version': async (_, { asset_id, semver }) => {
     console.log(`Downloading asset ${asset_id}`);
     await downloadVersion({ asset_id, semver });
     return { ok: true };
   },
-  // add another field for semver
+  'assets:remove-version': async (_, { asset_id, semver }) => {
+    await removeVersion({ asset_id, semver });
+    return { ok: true };
+  },
   'assets:commit-changes': async (_, { asset_id, semver }) => {
     console.log(`Committing changes for ${asset_id}@${semver}`);
     await commitChanges(asset_id, semver);

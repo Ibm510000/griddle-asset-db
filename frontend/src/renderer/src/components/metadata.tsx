@@ -1,17 +1,18 @@
+import { useEffect, useMemo, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { CiEdit } from 'react-icons/ci';
+import { MdSyncDisabled } from 'react-icons/md';
+import { Link } from 'react-router-dom';
+
 import { useSelectedAsset } from '@renderer/hooks/use-asset-select';
 import useDownloads from '@renderer/hooks/use-downloads';
-import { useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { useState } from 'react';
-import { CiEdit } from 'react-icons/ci';
 import fetchClient from '@renderer/lib/fetch-client';
-import { Controller, useForm } from 'react-hook-form';
 import { encodeThumbnailImage } from '@renderer/lib/image-util';
 import { Asset } from '@renderer/types';
 
 export default function Metadata() {
   const { asset } = useSelectedAsset();
-  const { downloadedVersions } = useDownloads();
+  const { downloadedVersions, mutate } = useDownloads();
   // versions also available here for showing asset versions!
 
   const isDownloaded = useMemo(() => {
@@ -85,6 +86,27 @@ export default function Metadata() {
     asset.image_uri = image_uri;
 
     data.thumbnailFile = undefined;
+  };
+
+  const onUnsyncClick = async () => {
+    console.log('unsyncing asset', asset);
+    if (!asset) {
+      console.log('asset not found');
+      return;
+    }
+
+    const downloaded = downloadedVersions?.find(({ asset_id }) => asset_id === asset.id);
+    if (!downloaded) {
+      console.log('asset not downloaded');
+      return;
+    }
+
+    await window.api.ipc('assets:remove-version', {
+      asset_id: asset.id,
+      semver: downloaded.semver, // TODO: make this more robust
+    });
+
+    await mutate();
   };
 
   if (!asset) {
@@ -222,12 +244,21 @@ export default function Metadata() {
           )}
           {/* Update Asset Button */}
           {isDownloaded && (
-            <Link
-              className="btn btn-outline mt-6"
-              to={{ pathname: `/update-asset`, search: `?id=${asset.id}` }}
-            >
-              + Commit Changes
-            </Link>
+            <>
+              <Link
+                className="btn btn-outline mt-6"
+                to={{ pathname: `/update-asset`, search: `?id=${asset.id}` }}
+              >
+                + Commit Changes
+              </Link>
+              <button
+                className="btn btn-ghost btn-sm mt-2 flex flex-row flex-nowrap items-center gap-2 text-sm"
+                onClick={onUnsyncClick}
+              >
+                <MdSyncDisabled />
+                Unsync
+              </button>
+            </>
           )}
         </>
       )}

@@ -25,9 +25,16 @@ export default function UpdateAssetForm({ uuid, afterSubmit }: UpdateAssetFormPr
   // --------------------------------------------
 
   const submitHandler = async (data: UpdateAssetFormData) => {
+    const { versions: downloadedVersions } = await window.api.ipc('assets:list-downloaded', null);
+    const downloaded = downloadedVersions.find(({ asset_id }) => asset_id === uuid);
+
+    if (!downloaded) {
+      console.error('No downloaded version found for asset', uuid);
+      return;
+    }
+
     // Calling fetchClient.POST()
-    // TODO for Rain: add { semver } to the endpoint
-    await window.api.ipc('assets:commit-changes', { asset_id: uuid });
+    await window.api.ipc('assets:commit-changes', { asset_id: uuid, semver: downloaded.semver });
 
     await refetchSearch();
 

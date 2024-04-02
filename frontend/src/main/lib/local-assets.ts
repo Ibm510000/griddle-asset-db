@@ -33,6 +33,27 @@ export function getStoredVersions() {
   return assetsStore.get('versions', []);
 }
 
+/**
+ * Should be run after POST /api/v1/assets/ to create an empty folder for the asset
+ */
+export async function createInitialVersion({
+  asset_id,
+  asset_name,
+}: {
+  asset_id: string;
+  asset_name: string;
+}) {
+  console.log('making initial version');
+  const folderName = `${asset_name}_${asset_id.substring(0, 8)}/`;
+  const folderPath = path.join(getDownloadFolder(), folderName);
+
+  console.log('creating folder', folderPath);
+  await fsPromises.mkdir(folderPath, { recursive: true });
+
+  console.log('adding to store');
+  const newEntry = { asset_id, semver: null, folderName } satisfies DownloadedEntry;
+  assetsStore.set('versions', [...getStoredVersions(), newEntry]);
+}
 async function zipFolder(sourceFolder: string, zipFilePath: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const output = createWriteStream(zipFilePath);
@@ -177,4 +198,28 @@ export async function downloadVersion({ asset_id, semver }: { asset_id: string; 
   ]);
 
   console.log('we made it! check', getDownloadFolder());
+}
+
+/**
+ * Removes a version from the store and deletes the associated folder
+ */
+export async function removeVersion({
+  asset_id,
+  semver,
+}: {
+  asset_id: string;
+  semver: string | null;
+}) {
+  const versions = getStoredVersions();
+
+  const stored = versions.find((v) => v.asset_id === asset_id && v.semver === semver);
+  if (!stored) return;
+
+  // delete folder
+  const folderPath = path.join(getDownloadFolder(), stored.folderName);
+  await fsPromises.rm(folderPath, { recursive: true });
+
+  // remove from store
+  const newVersions = versions.filter((v) => v.asset_id !== asset_id || v.semver !== semver);
+  assetsStore.set('versions', newVersions);
 }
