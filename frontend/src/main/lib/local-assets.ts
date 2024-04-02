@@ -1,12 +1,14 @@
 import Store from 'electron-store';
 import { existsSync } from 'node:fs';
-import fs from 'node:fs/promises';
+import { createWriteStream } from 'fs';
+import fsPromises from 'node:fs/promises';
 import path from 'node:path';
 import extract from 'extract-zip';
 
 import { app } from 'electron';
 import fetchClient from './fetch-client';
 import { DownloadedEntry } from '../../types/ipc';
+import archiver from 'archiver';
 
 const assetsStore = new Store<{ versions: DownloadedEntry[]; downloadFolder: string }>({
   defaults: { versions: [], downloadFolder: path.join(app.getPath('documents'), 'Griddle') },
@@ -17,7 +19,7 @@ export function getDownloadFolder() {
 
   // Ensure the download folder exists
   if (!existsSync(downloadPath)) {
-    fs.mkdir(downloadPath, { recursive: true });
+    fsPromises.mkdir(downloadPath, { recursive: true });
   }
 
   return downloadPath;
@@ -28,6 +30,102 @@ export function setDownloadFolder(downloadFolder: string) {
 }
 
 export function getStoredVersions() {
+  return assetsStore.get('versions', []);
+}
+
+async function zipFolder(sourceFolder: string, zipFilePath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const output = createWriteStream(zipFilePath);
+    const archive = archiver('zip', { zlib: { level: 9 } });
+
+    output.on('close', () => {
+      console.log(archive.pointer() + ' total bytes');
+      console.log('archiver has been finalized and the output file descriptor has closed.');
+      resolve();
+    });
+
+    output.on('end', () => console.log('Data has been drained'));
+
+    archive.on('warning', (err) => {
+      if (err.code === 'ENOENT') {
+        console.warn(err);
+      } else {
+        reject(err);
+      }
+    });
+
+    archive.on('error', (err) => reject(err));
+
+    archive.pipe(output);
+    archive.directory(sourceFolder, false);
+    archive.finalize();
+  });
+}
+
+export async function commitChanges(asset_id: string, semver: string | null) {
+  console.log('fetching metadata...');
+  let asset_name;
+  {
+    const { data, error, response } = await fetchClient.GET('/api/v1/assets/{uuid}', {
+      params: { path: { uuid: asset_id } },
+    });
+    if (error || response.status !== 200) {
+      throw new Error(`Failed to fetch metadata for asset ${asset_id}`);
+    }
+    asset_name = data.asset.asset_name;
+  }
+  const folderName = getStoredVersions().find(
+    (v) => v.asset_id === asset_id && v.semver === semver,
+  )?.folderName;
+
+  console.log('folderName', folderName);
+
+  if (!folderName) {
+    console.log('no folder name found for', asset_id, semver);
+    return;
+  }
+
+  const sourceFolder = path.join(getDownloadFolder(), folderName);
+  const zipFilePath = path.join(app.getPath('temp'), `${asset_id}_${semver}.zip`);
+  console.log('sourceFolder is: ', sourceFolder); // debug log
+  console.log('zipFilePath is: ', zipFilePath);
+
+  // Zip up asset folder
+  await zipFolder(sourceFolder, zipFilePath);
+  const fileContents = await fsPromises.readFile(zipFilePath);
+  const fileData = new Blob([fileContents], { type: 'application/zip' });
+
+  // Uploading Zip file with multipart/form-data
+  const { response, error } = await fetchClient.POST('/api/v1/assets/{uuid}/versions', {
+    params: { path: { uuid: asset_id } },
+    body: {
+      file: fileData as unknown as string,
+      message: 'New version for ' + asset_name + 'uploaded',
+      is_major: true,
+    },
+    bodySerializer(body) {
+      const formData = new FormData();
+      formData.append('file', body.file as unknown as Blob, `${asset_id}_${semver}.zip`);
+      formData.append('message', body.message);
+      formData.append('is_major', (body.is_major ?? false).toString());
+      return formData;
+    },
+  });
+
+  if (error || !response.ok) {
+    console.log('error uploading zip file', error, response.status);
+    throw new Error(`Failed to upload zip file for asset ${asset_id}`);
+  }
+
+  // Update local store with the new version
+  const newVersion = { asset_id, semver, folderName };
+  const versions = getStoredVersions();
+  versions.push(newVersion);
+  assetsStore.set('versions', versions);
+
+  // Clean up the zip file
+  await fsPromises.rm(zipFilePath);
+
   return assetsStore.get('versions', []);
 }
 
@@ -61,7 +159,7 @@ export async function downloadVersion({ asset_id, semver }: { asset_id: string; 
 
   console.log('writing!');
   const zipFilePath = path.join(app.getPath('temp'), `${asset_id.substring(0, 8)}_${semver}.zip`);
-  fs.writeFile(zipFilePath, fileBuffer);
+  fsPromises.writeFile(zipFilePath, fileBuffer);
 
   console.log('unzipping!');
   // previously had semver in here but probably not necessary
@@ -70,7 +168,7 @@ export async function downloadVersion({ asset_id, semver }: { asset_id: string; 
   await extract(zipFilePath, { dir: path.join(getDownloadFolder(), folderName) });
 
   console.log('removing zip file...');
-  await fs.rm(zipFilePath);
+  await fsPromises.rm(zipFilePath);
 
   console.log('marking as done!');
   assetsStore.set('versions', [

@@ -24,12 +24,13 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.0",
     "@electron-toolkit/utils": "^3.0.0",
+    "archiver": "^7.0.1",
     "electron-store": "^8.2.0",
     "electron-updater": "^6.1.7",
     "extract-zip": "^2.0.1",
+    "jszip": "^3.10.1",
     "openapi-fetch": "^0.9.3",
     "openapi-typescript": "^6.7.5",
-    "jszip": "^3.10.1",
     "theme-change": "^2.5.0"
   },
   "devDependencies": {

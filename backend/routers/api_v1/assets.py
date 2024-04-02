@@ -109,8 +109,8 @@ def new_asset_version(
     is_major: Annotated[bool, Form()] = False,
     db: Session = Depends(get_db),
 ):
-    if file.content_type != "application/zip":
-        raise HTTPException(status_code=400, detail="File must be a ZIP archive")
+    # if file.content_type != "application/zip":
+    #     raise HTTPException(status_code=400, detail="File must be a ZIP archive")
 
     file_path = save_upload_file_temp(file)
     if file_path is None:
