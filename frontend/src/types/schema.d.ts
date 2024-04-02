@@ -33,10 +33,6 @@ export interface paths {
     /** Upload a new version for a given asset */
     post: operations['new_asset_version_api_v1_assets__uuid__versions_post'];
   };
-  '/api/v1/assets/{uuid}/versions/{semver}': {
-    /** Get a specific version of an asset */
-    get: operations['get_version_api_v1_assets__uuid__versions__semver__get'];
-  };
   '/api/v1/assets/{uuid}/versions/{semver}/file': {
     /** Download Version File */
     get: operations['download_version_file_api_v1_assets__uuid__versions__semver__file_get'];
@@ -85,6 +81,13 @@ export interface components {
        * Format: binary
        */
       file: string;
+      /** Message */
+      message: string;
+      /**
+       * Is Major
+       * @default false
+       */
+      is_major?: boolean;
     };
     /** HTTPValidationError */
     HTTPValidationError: {
@@ -288,10 +291,6 @@ export interface operations {
   /** Upload a new version for a given asset */
   new_asset_version_api_v1_assets__uuid__versions_post: {
     parameters: {
-      query: {
-        message: string;
-        is_major?: boolean;
-      };
       path: {
         uuid: string;
       };
@@ -306,33 +305,6 @@ export interface operations {
       200: {
         content: {
           'application/json': unknown;
-        };
-      };
-      /** @description Not found */
-      404: {
-        content: never;
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  /** Get a specific version of an asset */
-  get_version_api_v1_assets__uuid__versions__semver__get: {
-    parameters: {
-      path: {
-        uuid: string;
-        semver: string;
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          'application/json': components['schemas']['Version'];
         };
       };
       /** @description Not found */

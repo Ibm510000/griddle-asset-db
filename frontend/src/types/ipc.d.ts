@@ -11,7 +11,8 @@ type VersionCreate = components['schemas']['Version'];
 
 type DownloadedEntry = {
   asset_id: string;
-  semver: string;
+  // null semver means no associated version
+  semver: string | null;
   folderName: string;
 };
 

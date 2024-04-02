@@ -226,10 +226,7 @@ export default function NewAssetForm({
         )}
       />
       <div className="mt-4">
-        <button
-          type="submit"
-          className="rounded border border-gray-400 bg-white px-4 py-2 font-bold text-black hover:bg-gray-300"
-        >
+        <button type="submit" className="btn btn-primary">
           Create
         </button>
       </div>

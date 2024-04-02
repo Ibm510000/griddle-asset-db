@@ -6,12 +6,7 @@ import extract from 'extract-zip';
 
 import { app } from 'electron';
 import fetchClient from './fetch-client';
-
-type DownloadedEntry = {
-  asset_id: string;
-  semver: string;
-  folderName: string;
-};
+import { DownloadedEntry } from '../../types/ipc';
 
 const assetsStore = new Store<{ versions: DownloadedEntry[]; downloadFolder: string }>({
   defaults: { versions: [], downloadFolder: path.join(app.getPath('documents'), 'Griddle') },
@@ -69,7 +64,9 @@ export async function downloadVersion({ asset_id, semver }: { asset_id: string; 
   fs.writeFile(zipFilePath, fileBuffer);
 
   console.log('unzipping!');
-  const folderName = `${asset_name}_${semver}_${asset_id.substring(0, 8)}/`;
+  // previously had semver in here but probably not necessary
+  // const folderName = `${asset_name}_${semver}_${asset_id.substring(0, 8)}/`;
+  const folderName = `${asset_name}_${asset_id.substring(0, 8)}/`;
   await extract(zipFilePath, { dir: path.join(getDownloadFolder(), folderName) });
 
   console.log('removing zip file...');

@@ -34,7 +34,7 @@ const Navbar = () => {
         <Link className="btn btn-outline" to={'/new-asset'}>
           + New Asset
         </Link>
-        
+
         {/* Update Asset Button */}
         {/* <Link className="btn btn-outline" to={'/update-asset'}>
           + Update Asset
