@@ -27,34 +27,51 @@ def read_asset(db: Session, asset_id: str):
     return db.execute(select(Asset.filter(Asset.id == asset_id)).limit(1)).first()
 
 
-def read_assets(db: Session, search: str | None = None, offset=0, sort: Literal["date_asc", "name_asc", "date_dsc", "name_dsc"] = "date_dsc",):
+def read_assets(
+    db: Session,
+    search: str | None = None,
+    offset=0,
+    sort: Literal["date_asc", "name_asc", "date_dsc", "name_dsc"] = "date_dsc",
+):
+    # TODO: figure out the join nonsense
     # 1. distance between str and asset name should be small
-    # 2. Each word in search are tested against keywords, 
+    # 2. Each word in search are tested against keywords,
     query = select(Asset)
-    query = query.join(Version, Asset.id == Version.asset_id, isouter=True)
+    # query = query.join(Version, Asset.id == Version.asset_id, isouter=True)
+    # query = query.distinct(Asset.id)
     if search is not None:
         # If search contains commas, split by commas, otherwise split by spaces
-        if ',' in search:
+        if "," in search:
             reader = csv.reader([search], skipinitialspace=True)
             keywords = next(reader)
         else:
             keywords = search.split()
         # check if asset name contains search
         asset_name_conditions = []
-        asset_name_conditions.append(or_(*[Asset.asset_name.ilike(f"%{search}%")], *[Asset.asset_name.ilike(f"%{kw}%") for kw in keywords]))
+        asset_name_conditions.append(
+            or_(
+                *[Asset.asset_name.ilike(f"%{search}%")],
+                *[Asset.asset_name.ilike(f"%{kw}%") for kw in keywords],
+            )
+        )
         # check if keywords contain search words
-        query = query.filter(or_(*asset_name_conditions, *[Asset.keywords.ilike(f"%{kw}%") for kw in keywords]))
-    
+        query = query.filter(
+            or_(
+                *asset_name_conditions,
+                *[Asset.keywords.ilike(f"%{kw}%") for kw in keywords],
+            )
+        )
+
     # sort by date or name
-    if sort == "date_asc":
-        query = query.order_by(Version.date.asc())
-    elif sort == "name_asc":
+    # if sort == "date_asc":
+    #     query = query.order_by(Version.date.asc())
+    if sort == "name_asc":
         query = query.order_by(Asset.asset_name.asc())
-    elif sort == "date_dsc":
-        query = query.order_by(Version.date.desc())
+    # elif sort == "date_dsc":
+    #     query = query.order_by(Version.date.desc())
     elif sort == "name_dsc":
         query = query.order_by(Asset.asset_name.desc())
-    
+
     # limit and offset query, then return
     query = query.limit(24).offset(offset)
     return db.execute(query).scalars().all()

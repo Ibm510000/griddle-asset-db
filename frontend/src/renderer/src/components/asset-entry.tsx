@@ -1,11 +1,11 @@
 import { useAssetSelectStore } from '@renderer/hooks/use-asset-select';
-import { Asset, Version } from '@renderer/types';
+import { Asset } from '@renderer/types';
 import { MdCheckCircle, MdDownload, MdDownloading } from 'react-icons/md';
 
 import useDownloads from '@renderer/hooks/use-downloads';
+import { syncAsset } from '@renderer/lib/util';
 import { useState } from 'react';
 import funnygif from '../assets/funny.gif';
-import fetchClient from '@renderer/lib/fetch-client';
 
 export default function AssetEntry({
   asset: { asset_name, author_pennkey, id, image_uri },
@@ -23,36 +23,7 @@ export default function AssetEntry({
 
   const onDownloadClick = async () => {
     setDownloading(true);
-    let latestVersion: Version | undefined;
-    {
-      const {
-        data: versions,
-        response,
-        error,
-      } = await fetchClient.GET(`/api/v1/assets/{uuid}/versions`, {
-        params: { path: { uuid: id } },
-      });
-
-      if (response.status !== 200 || error) {
-        console.error('Failed to fetch metadata for asset', id);
-        setDownloading(false);
-        return;
-      }
-
-      latestVersion = versions.at(0);
-    }
-
-    if (latestVersion === undefined) {
-      // logic for if there is no initial version
-      await window.api.ipc('assets:create-initial-version', { asset_id: id, asset_name });
-    } else {
-      // fetch latest version otherwise
-      await window.api.ipc('assets:download-version', {
-        asset_id: id,
-        semver: latestVersion.semver,
-      });
-    }
-
+    await syncAsset({ uuid: id, asset_name });
     setDownloading(false);
     await mutateDownloads();
   };

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { CiEdit } from 'react-icons/ci';
-import { MdSyncDisabled } from 'react-icons/md';
+import { MdFolderOpen, MdSync, MdSyncDisabled } from 'react-icons/md';
 import { Link } from 'react-router-dom';
 
 import { useSelectedAsset } from '@renderer/hooks/use-asset-select';
@@ -9,6 +9,7 @@ import useDownloads from '@renderer/hooks/use-downloads';
 import fetchClient from '@renderer/lib/fetch-client';
 import { encodeThumbnailImage } from '@renderer/lib/image-util';
 import { Asset } from '@renderer/types';
+import { syncAsset } from '@renderer/lib/util';
 
 export default function Metadata() {
   const { asset } = useSelectedAsset();
@@ -107,6 +108,18 @@ export default function Metadata() {
     });
 
     await mutate();
+  };
+
+  const onOpenFolderClick = async () => {
+    if (!asset) return;
+
+    const downloaded = downloadedVersions?.find(({ asset_id }) => asset_id === asset.id);
+    if (!downloaded) return;
+
+    await window.api.ipc('assets:open-folder', {
+      asset_id: asset.id,
+      semver: downloaded.semver,
+    });
   };
 
   if (!asset) {
@@ -242,11 +255,30 @@ export default function Metadata() {
               className="mb-2 aspect-square w-full rounded-lg bg-base-300"
             />
           )}
+          {!isDownloaded && (
+            <button
+              className="btn btn-outline btn-primary mt-2 flex flex-row items-center gap-2"
+              onClick={async () => {
+                await syncAsset({ asset_name: asset.asset_name, uuid: asset.id });
+                await mutate();
+              }}
+            >
+              <MdSync />
+              Sync
+            </button>
+          )}
           {/* Update Asset Button */}
           {isDownloaded && (
             <>
+              <button
+                className="btn btn-ghost btn-sm mt-6 flex flex-row flex-nowrap items-center gap-2 text-sm"
+                onClick={onOpenFolderClick}
+              >
+                <MdFolderOpen />
+                Open
+              </button>
               <Link
-                className="btn btn-outline mt-6"
+                className="btn btn-outline btn-primary mt-2"
                 to={{ pathname: `/update-asset`, search: `?id=${asset.id}` }}
               >
                 Commit Changes

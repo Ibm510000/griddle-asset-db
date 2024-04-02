@@ -42,7 +42,7 @@ type GriddleIpcSchema = {
     response: { ok: boolean };
   };
   'assets:open-folder': {
-    request: { asset_id: string; semver: string };
+    request: { asset_id: string; semver: string | null };
     response: { ok: boolean };
   };
 };

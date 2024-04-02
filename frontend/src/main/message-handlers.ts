@@ -4,6 +4,7 @@ import {
   createInitialVersion,
   downloadVersion,
   getStoredVersions,
+  openFolder,
   removeVersion,
 } from './lib/local-assets';
 
@@ -37,8 +38,8 @@ const messageHandlers: MessageHandlers = {
     return { ok: true };
   },
   'assets:open-folder': async (_, { asset_id, semver }) => {
-    // TODO
     console.log(`Opening folder for ${asset_id}@${semver}`);
+    await openFolder(asset_id, semver);
     return { ok: true };
   },
 };

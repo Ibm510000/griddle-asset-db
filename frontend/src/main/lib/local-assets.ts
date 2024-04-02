@@ -5,7 +5,7 @@ import fsPromises from 'node:fs/promises';
 import path from 'node:path';
 import extract from 'extract-zip';
 
-import { app } from 'electron';
+import { app, shell } from 'electron';
 import fetchClient from './fetch-client';
 import { DownloadedEntry } from '../../types/ipc';
 import archiver from 'archiver';
@@ -54,6 +54,14 @@ export async function createInitialVersion({
   const newEntry = { asset_id, semver: null, folderName } satisfies DownloadedEntry;
   assetsStore.set('versions', [...getStoredVersions(), newEntry]);
 }
+
+export async function openFolder(asset_id: string, semver: string | null) {
+  const stored = getStoredVersions().find((v) => v.asset_id === asset_id && v.semver === semver);
+  if (!stored) return;
+
+  shell.openPath(path.join(getDownloadFolder(), stored.folderName));
+}
+
 async function zipFolder(sourceFolder: string, zipFilePath: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const output = createWriteStream(zipFilePath);
@@ -132,6 +140,7 @@ export async function commitChanges(
     throw new Error(`Failed to upload zip file for asset ${asset_id}`);
   }
 
+  // TODO: make this remove old version entry from store
   // Update local store with the new version
   const newVersion = { asset_id, semver, folderName };
   const versions = getStoredVersions();
