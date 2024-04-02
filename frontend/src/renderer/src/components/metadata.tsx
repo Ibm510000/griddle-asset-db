@@ -1,25 +1,36 @@
-import { Asset } from '../types';
+import { useSelectedAsset } from '@renderer/hooks/use-asset-select';
+import useDownloads from '@renderer/hooks/use-downloads';
+import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { CiEdit } from 'react-icons/ci';
 import fetchClient from '@renderer/lib/fetch-client';
 import { Controller, useForm } from 'react-hook-form';
 import { encodeThumbnailImage } from '@renderer/lib/image-util';
+import { Asset } from '@renderer/types';
 
-interface Props {
-  asset: Asset | null;
-}
+export default function Metadata() {
+  const { asset } = useSelectedAsset();
+  const { downloadedVersions } = useDownloads();
+  // versions also available here for showing asset versions!
 
-interface UpdateMetadataData {
-  thumbnailFile: File | undefined;
-}
+  const isDownloaded = useMemo(() => {
+    return downloadedVersions?.findIndex(({ asset_id }) => asset_id === asset?.id) !== -1;
+  }, [downloadedVersions, asset]);
 
-function Metadata({ asset }: Props): JSX.Element {
+  interface UpdateMetadataData {
+    thumbnailFile: File | undefined;
+  }
+
   const [editMode, setEditMode] = useState(false);
   const [editedAsset, setEditedAsset] = useState<Asset | null>(null);
 
+  useEffect(() => {
+    if (!asset) setEditMode(false);
+  }, [asset, setEditMode]);
+
   const { control, handleSubmit } = useForm<UpdateMetadataData>({
-    defaultValues: { thumbnailFile: undefined},
+    defaultValues: { thumbnailFile: undefined },
   });
 
   const handleEditClick = () => {
@@ -95,7 +106,6 @@ function Metadata({ asset }: Props): JSX.Element {
             <CiEdit className="h-4 w-4" />
           </button>
         )}
-        
       </div>
 
       {editMode ? (
@@ -187,30 +197,40 @@ function Metadata({ asset }: Props): JSX.Element {
               )}
             />
             <div className="mt-4">
-        <button
-          type="submit"
-          className="rounded border border-gray-400 bg-white px-4 py-2 font-bold text-black hover:bg-gray-300"
-        >
-          Save
-        </button>
-      </div>
+              <button type="submit" className="btn btn-outline">
+                Save
+              </button>
+            </div>
           </form>
         </>
       ) : (
         <>
-          <div className="block text-sm font-medium text-gray-700"> Asset Name: {asset.asset_name}</div>
+          <div className="block text-sm font-medium text-gray-700">
+            {' '}
+            Asset Name: {asset.asset_name}
+          </div>
           <div className="block text-sm font-medium text-gray-700">Keywords: {asset.keywords}</div>
-          <div className="block text-sm font-medium text-gray-700">Author: {asset.author_pennkey}</div>
-          {asset.image_uri && <img src={asset.image_uri} alt={asset.asset_name} className="mb-2 aspect-square w-full rounded-lg bg-base-300"/>}
+          <div className="block text-sm font-medium text-gray-700">
+            Author: {asset.author_pennkey}
+          </div>
+          {asset.image_uri && (
+            <img
+              src={asset.image_uri}
+              alt={asset.asset_name}
+              className="mb-2 aspect-square w-full rounded-lg bg-base-300"
+            />
+          )}
           {/* Update Asset Button */}
-        <Link className="btn btn-outline" to={`/update-asset?assetId=${asset.id}`}>
-          + Update Asset
-        </Link>
+          {isDownloaded && (
+            <Link
+              className="btn btn-outline mt-6"
+              to={{ pathname: `/update-asset`, search: `?id=${asset.id}` }}
+            >
+              + Commit Changes
+            </Link>
+          )}
         </>
       )}
-        
     </div>
   );
 }
-
-export default Metadata;

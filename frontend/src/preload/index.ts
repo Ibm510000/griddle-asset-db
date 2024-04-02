@@ -1,8 +1,13 @@
-import { contextBridge } from 'electron';
+import { contextBridge, ipcRenderer } from 'electron';
 import { electronAPI } from '@electron-toolkit/preload';
+import { GriddleIpcKey, GriddleIpcRequest, GriddleIpcResponse } from '../types/ipc';
 
 // Custom APIs for renderer
-const api = {};
+const api = {
+  ipc: <K extends GriddleIpcKey>(key: K, request: GriddleIpcRequest<K>) => {
+    return ipcRenderer.invoke(key, request) as Promise<GriddleIpcResponse<K>>;
+  },
+};
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

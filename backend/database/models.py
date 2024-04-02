@@ -15,6 +15,7 @@ def random_uuid():
 class Asset(Base):
     __tablename__ = "assets"
 
+    # TODO: move these to Mapped[str] for easier manipulation
     id: Mapped[UUID] = mapped_column(
         Uuid(as_uuid=True), primary_key=True, insert_default=uuid4
     )

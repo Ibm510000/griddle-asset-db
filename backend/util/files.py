@@ -1,7 +1,12 @@
+from contextlib import contextmanager
+import os
 from pathlib import Path
 import shutil
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory, TemporaryFile, gettempdir
 from fastapi import UploadFile
+
+from util.s3 import assets_bucket
+from botocore.exceptions import NoCredentialsError
 
 
 def save_upload_file_temp(upload_file: UploadFile) -> Path | None:
@@ -15,3 +20,16 @@ def save_upload_file_temp(upload_file: UploadFile) -> Path | None:
     finally:
         upload_file.file.close()
     return temp_path
+
+
+def temp_s3_download(file_key: str):
+    temp_path = Path(gettempdir()) / file_key
+    assets_bucket.download_file(file_key, str(temp_path))
+
+    def cleanup():
+        try:
+            os.remove(temp_path)
+        except FileNotFoundError:
+            pass
+
+    return (temp_path, cleanup)

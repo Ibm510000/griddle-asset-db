@@ -24,7 +24,11 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.0",
     "@electron-toolkit/utils": "^3.0.0",
+    "electron-store": "^8.2.0",
     "electron-updater": "^6.1.7",
+    "extract-zip": "^2.0.1",
+    "openapi-fetch": "^0.9.3",
+    "openapi-typescript": "^6.7.5",
     "jszip": "^3.10.1",
     "theme-change": "^2.5.0"
   },
@@ -47,8 +51,6 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react": "^7.33.2",
     "image-js": "^0.35.5",
-    "openapi-fetch": "^0.9.3",
-    "openapi-typescript": "^6.7.5",
     "postcss": "^8.4.38",
     "prettier": "^3.2.4",
     "prettier-plugin-tailwindcss": "^0.5.13",

@@ -1,7 +1,8 @@
 from typing import Annotated, Literal, Sequence
 from uuid import UUID
-from fastapi import APIRouter, Body, Depends, File, Form, HTTPException, UploadFile
-from pydantic import BaseModel
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
+from fastapi.background import P
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from datetime import datetime
 
@@ -9,9 +10,11 @@ from util.crud import (
     AssetInfo,
     create_asset,
     create_version,
+    read_asset_exists,
     read_asset_versions,
     read_assets,
     read_asset_info,
+    read_version_file,
     update_asset,
 )
 from database.connection import get_db
@@ -125,9 +128,16 @@ def new_asset_version(
     is_major: bool = False,
     db: Session = Depends(get_db),
 ):
+    if file.content_type != "application/zip":
+        raise HTTPException(status_code=400, detail="File must be a ZIP archive")
+
     file_path = save_upload_file_temp(file)
     if file_path is None:
         raise HTTPException(status_code=400, detail="File uploaded incorrectly")
+
+    if not read_asset_exists(db, uuid):
+        raise HTTPException(status_code=404, detail="Asset not found")
+
     return create_version(
         db,
         file_path,
@@ -137,4 +147,28 @@ def new_asset_version(
     )
 
 
-# TODO: get_asset_file
+@router.get(
+    "/{uuid}/versions/{semver}/file",
+    responses={
+        200: {
+            "content": {"application/zip": {}},
+            "description": "Download the version file as a zip archive",
+        }
+    },
+)
+def download_version_file(
+    background_tasks: BackgroundTasks,
+    uuid: str,
+    semver: str,
+    db: Session = Depends(get_db),
+) -> FileResponse:
+    (file_path, cleanup) = read_version_file(db, uuid, semver)
+    background_tasks.add_task(cleanup)
+
+    if file_path is None:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    return FileResponse(
+        path=file_path,
+        media_type="application/zip",
+    )

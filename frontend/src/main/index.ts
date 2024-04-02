@@ -1,7 +1,9 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron';
+import { electronApp, is, optimizer } from '@electron-toolkit/utils';
+import { BrowserWindow, app, ipcMain, shell } from 'electron';
 import { join } from 'path';
-import { electronApp, optimizer, is } from '@electron-toolkit/utils';
+
 import icon from '../../resources/icon.png?asset';
+import messageHandlers from './message-handlers';
 
 function createWindow(): void {
   // Create the browser window.
@@ -51,6 +53,13 @@ app.whenReady().then(() => {
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'));
+
+  Object.entries(messageHandlers).forEach(([key, handler]) => {
+    console.log(`registering handler for ${key}`);
+    ipcMain.handle(key, (evt, request) => {
+      return handler(evt.sender, request as never);
+    });
+  });
 
   createWindow();
 

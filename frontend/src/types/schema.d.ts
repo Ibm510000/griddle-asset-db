@@ -37,6 +37,10 @@ export interface paths {
     /** Get a specific version of an asset */
     get: operations['get_version_api_v1_assets__uuid__versions__semver__get'];
   };
+  '/api/v1/assets/{uuid}/versions/{semver}/file': {
+    /** Download Version File */
+    get: operations['download_version_file_api_v1_assets__uuid__versions__semver__file_get'];
+  };
 }
 
 export type webhooks = Record<string, never>;
@@ -109,6 +113,11 @@ export interface components {
       semver: string;
       /** Author Pennkey */
       author_pennkey: string;
+      /**
+       * Date
+       * Format: date-time
+       */
+      date: string;
     };
   };
   responses: never;
@@ -134,7 +143,7 @@ export interface operations {
       query?: {
         search?: string | null;
         keywords?: string | null;
-        sort?: 'date' | 'name';
+        sort?: 'date_asc' | 'name_asc' | 'date_dsc' | 'name_dsc';
         offset?: number;
       };
     };
@@ -324,6 +333,34 @@ export interface operations {
       200: {
         content: {
           'application/json': components['schemas']['Version'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  /** Download Version File */
+  download_version_file_api_v1_assets__uuid__versions__semver__file_get: {
+    parameters: {
+      path: {
+        uuid: string;
+        semver: string;
+      };
+    };
+    responses: {
+      /** @description Download the version file as a zip archive */
+      200: {
+        content: {
+          'application/json': unknown;
+          'application/zip': unknown;
         };
       };
       /** @description Not found */

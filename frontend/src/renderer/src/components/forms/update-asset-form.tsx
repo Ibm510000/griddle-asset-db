@@ -1,42 +1,47 @@
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { useAssetsSearchRefetch } from '@renderer/hooks/use-assets-search';
 import fetchClient from '@renderer/lib/fetch-client';
-import JSZip from 'jszip'; // added for zip files 
+import JSZip from 'jszip'; // added for zip files
 
 export interface UpdateAssetFormData {
-  uuid: string;      // asset uuid 
-  message: string;   // commit message 
+  uuid: string; // asset uuid
+  message: string; // commit message
   is_major: boolean; // major vs minor version
   zippedFile: string; // zipped file to upload - binary string
   uploadedFolder: File; // uploaded folder
 }
 
 interface UpdateAssetFormProps {
-  uuid?: string;    // asset uuid
+  uuid?: string; // asset uuid
   afterSubmit?: SubmitHandler<UpdateAssetFormData>;
 }
 
-// POST to /api/v1/assets/{uuid}/versions - Upload new version for a given asset 
-export default function UpdateAssetForm({
-  uuid,
-  afterSubmit,
-}: UpdateAssetFormProps) {
+// POST to /api/v1/assets/{uuid}/versions - Upload new version for a given asset
+export default function UpdateAssetForm({ uuid, afterSubmit }: UpdateAssetFormProps) {
   const refetchSearch = useAssetsSearchRefetch();
   const { register, control, handleSubmit } = useForm<UpdateAssetFormData>({
-    defaultValues: { uuid: uuid, message: '', is_major: false, zippedFile: '', uploadedFolder: undefined},
+    defaultValues: {
+      uuid: uuid,
+      message: '',
+      is_major: false,
+      zippedFile: '',
+      uploadedFolder: undefined,
+    },
   });
-  
 
   // --------------------------------------------
- 
+
   const submitHandler = async (data: UpdateAssetFormData) => {
     // Convert the zipped file to a binary string
     try {
       let binaryString = '';
       const zip = new JSZip();
-      zip.file(data.uploadedFolder.webkitRelativePath || data.uploadedFolder.name, data.uploadedFolder);
+      zip.file(
+        data.uploadedFolder.webkitRelativePath || data.uploadedFolder.name,
+        data.uploadedFolder,
+      );
       // Generate the zip file as a binary string
-      binaryString = await zip.generateAsync({ type: "binarystring" });
+      binaryString = await zip.generateAsync({ type: 'binarystring' });
       data.zippedFile = binaryString;
     } catch (err) {
       // TODO: toast
@@ -54,12 +59,12 @@ export default function UpdateAssetForm({
           is_major: data.is_major,
         },
         path: {
-          uuid: data.uuid
-        }
+          uuid: data.uuid,
+        },
       },
       body: {
-        file: data.zippedFile
-      }
+        file: data.zippedFile,
+      },
     });
 
     if (error) throw error;
@@ -72,7 +77,6 @@ export default function UpdateAssetForm({
     if (afterSubmit) afterSubmit(data); // Call the onSubmit function provided by props
   };
 
-
   return (
     <form onSubmit={handleSubmit(submitHandler)}>
       <div className="mt-4">
@@ -82,9 +86,10 @@ export default function UpdateAssetForm({
         <input
           type="text"
           id="uuid"
-          className="mt-1 block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          className="mt-1 block w-full rounded-md border-gray-300 p-2 text-base-content/50 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
           value={uuid} // Assuming data.uuid holds the UUID you want to display
           readOnly // Makes the input read-only
+          disabled
           {...register('uuid')}
         />
       </div>
@@ -102,21 +107,20 @@ export default function UpdateAssetForm({
         />
       </div>
 
-      <div className="mt-4">
-        <label htmlFor="is_major" className="block text-sm font-medium text-gray-700">
-          Is This a Major Version Update?
-        </label>
+      <label className="mt-4 flex flex-row items-center gap-3">
         <div className="mt-1">
           <input
             type="checkbox"
-            id="is_Major"
-            className="rounded border-gray-300 text-indigo-500 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
+            className="checkbox shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
             {...register('is_major')}
           />
         </div>
-       </div>
+        <div className="block text-sm font-medium text-gray-700">
+          Is This a Major Version Update?
+        </div>
+      </label>
 
-       <Controller
+      <Controller
         control={control}
         name="uploadedFolder"
         rules={{ required: true }}

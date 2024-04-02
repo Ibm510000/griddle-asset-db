@@ -1,21 +1,12 @@
-import funnygif from '../assets/funny.gif';
-
-import { useMemo, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 
-import { Asset } from '@renderer/types';
+import AssetList from '@renderer/components/asset-list';
+import { useAssetSelectStore } from '@renderer/hooks/use-asset-select';
 import Navbar from '../components/layout/navbar';
 import Metadata from '../components/metadata';
-import { useAssetsSearch } from '@renderer/hooks/use-assets-search';
 
 function HomeView(): JSX.Element {
-  const { assets, error, isLoading } = useAssetsSearch();
-  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
-
-  const selectedAsset = useMemo<Asset | null>(() => {
-    if (!assets || !selectedAssetId) return null;
-    return assets.find(({ id }) => id === selectedAssetId) ?? null;
-  }, [assets, selectedAssetId]);
+  const setSelectedAssetId = useAssetSelectStore((state) => state.setSelected);
 
   return (
     <>
@@ -36,40 +27,12 @@ function HomeView(): JSX.Element {
             }}
             className="relative bg-base-200"
           >
-            {/* Main body (asset browser) */}
-            {!!error && <p>Couldn&apos;t load assets!</p>}
-            {!!isLoading && <p>loading...</p>}
-            {!!assets && (
-              <div className="absolute inset-0 overflow-y-auto">
-                <ul className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] items-start gap-4 px-6 py-4">
-                  {assets.map(({ id, asset_name, author_pennkey, image_uri }) => (
-                    <li key={id} className="h-full w-full">
-                      <button
-                        type="button"
-                        onClick={(evt) => {
-                          evt.stopPropagation();
-                          setSelectedAssetId(id);
-                        }}
-                        className={`inline-flex h-full w-full flex-col rounded-2xl bg-base-100 p-4 text-left shadow transition-shadow focus-visible:outline-none ${id === selectedAssetId ? 'ring-2 ring-primary/60 focus-visible:outline-none focus-visible:ring-4' : 'ring-primary/40 focus-visible:ring-4'}`}
-                      >
-                        <img
-                          src={image_uri || funnygif}
-                          className="mb-2 aspect-square w-full rounded-lg bg-base-300"
-                        />
-                        <div className="px-1">
-                          {asset_name} -- {author_pennkey}
-                        </div>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            <AssetList />
           </div>
           <div className="relative border-l-[1px] border-base-content/20">
             <div className="absolute inset-0 px-6 py-4">
               {/* Asset metadata panel */}
-              {selectedAsset && <Metadata asset={selectedAsset} />}
+              <Metadata />
             </div>
           </div>
         </div>

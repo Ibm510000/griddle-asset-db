@@ -26,29 +26,32 @@ const useKey = () => {
 };
 
 export function useAssetsSearch() {
-  const { data, error, isLoading, isValidating, mutate } = useSWR(
-    useKey(),
-    async ([url, { search, keywords }]) => {
-      const { data, error, response } = await fetchClient.GET(url, {
-        params: {
-          query: {
-            keywords: keywords.join(','),
-            search: search || null,
-            sort: 'date',
-            // offset: blah blah
-          },
+  const {
+    data: assets,
+    error,
+    isLoading,
+    isValidating,
+    mutate,
+  } = useSWR(useKey(), async ([url, { search, keywords }]) => {
+    const { data, error, response } = await fetchClient.GET(url, {
+      params: {
+        query: {
+          keywords: keywords.join(','),
+          search: search || null,
+          sort: 'date_dsc',
+          // offset: 0,
         },
-      });
+      },
+    });
 
-      if (error) throw error;
-      if (!response.status.toString().startsWith('2'))
-        throw new Error(`Non-OK response with code ${response.status}: ${response.statusText}`);
+    if (error) throw error;
+    if (!response.status.toString().startsWith('2'))
+      throw new Error(`Non-OK response with code ${response.status}: ${response.statusText}`);
 
-      return data;
-    },
-  );
+    return data;
+  });
 
-  return { assets: data, error, isLoading, isValidating, mutate };
+  return { assets, error, isLoading, isValidating, mutate };
 }
 
 export function useAssetsSearchRefetch() {

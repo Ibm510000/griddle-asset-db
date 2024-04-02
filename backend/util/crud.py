@@ -15,6 +15,7 @@ from schemas.models import (
 )
 from database.models import Asset, Version
 
+from util.files import temp_s3_download
 from util.s3 import assets_bucket
 from sqlalchemy import or_, func
 from sqlalchemy.sql.expression import case
@@ -88,6 +89,16 @@ def update_asset(db: Session, asset_id: str, asset: AssetCreate):
     return db_asset
 
 
+def read_asset_exists(db: Session, asset_id: str):
+    try:
+        query = select(Asset.asset_name).filter(Asset.id == asset_id).limit(1)
+        result = db.execute(query).scalars().first()
+        return result is not None
+    except Exception as e:
+        print(e)
+        return False
+
+
 class AssetInfo(BaseModel):
     asset: MAsset
     versions: Sequence[MVersion]
@@ -96,15 +107,20 @@ class AssetInfo(BaseModel):
 def read_asset_info(db: Session, asset_id: str):
     query = (
         select(Asset, Version)
-        .outerjoin(Version, Asset.id == Version.asset_id)
+        .outerjoin(Version, Version.asset_id == Asset.id)
         .filter(Asset.id == asset_id)
         .order_by(Version.date.desc())
         .limit(3)
     )
     results = db.execute(query).mappings().all()
+
+    if len(results) == 0:
+        return None
+
+    noVersions = results[0].Version is None
     return AssetInfo(
         asset=results[0].Asset,
-        versions=[result.Version for result in results],
+        versions=[] if noVersions else [result.Version for result in results],
     )
 
 
@@ -121,7 +137,6 @@ def read_asset_versions(
     return db.execute(query).scalars().all()
 
 
-# TODO: download asset to temp directory then return file response
 def read_version_file(db: Session, asset_id: str, semver: str):
     version = (
         db.execute(
@@ -133,8 +148,9 @@ def read_version_file(db: Session, asset_id: str, semver: str):
         .first()
     )
     if version is None:
-        return None
-    return version.file_key
+        return (None, lambda: None)
+
+    return temp_s3_download(version.file_key)
 
 
 def create_version(

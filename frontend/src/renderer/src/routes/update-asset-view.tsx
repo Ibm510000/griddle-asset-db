@@ -1,9 +1,11 @@
 import UpdateAssetForm from '@renderer/components/forms/update-asset-form';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 export default function UpdateAssetView() {
   const navigate = useNavigate();
-  const { uuid } = useParams(); // Extracting the uuid parameter from the URL
+  const [params] = useSearchParams(); // Extracting the uuid parameter from the URL
+
+  const selectedId = params.get('id');
 
   return (
     <>
@@ -15,9 +17,8 @@ export default function UpdateAssetView() {
           onClick={(evt) => evt.stopPropagation()}
         >
           <h1 className="text-2xl font-semibold">Update Asset</h1>
-          
-          <UpdateAssetForm uuid={uuid} afterSubmit={() => navigate('/')} />
-          {/* <UpdateAssetForm afterSubmit={() => navigate('/')} /> */}
+
+          {selectedId && <UpdateAssetForm uuid={selectedId} afterSubmit={() => navigate('/')} />}
         </div>
       </div>
     </>
