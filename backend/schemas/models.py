@@ -1,6 +1,7 @@
 from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel
+from datetime import datetime
 
 
 class AssetBase(BaseModel):
@@ -33,6 +34,7 @@ class Version(VersionBase):
     asset_id: UUID
     semver: str
     author_pennkey: str
+    date: datetime
 
     class Config:
         from_attributes = True

@@ -1,10 +1,11 @@
 from pathlib import Path
-from typing import Literal, Sequence
+from typing import Sequence, Literal
 from uuid import uuid4
 from pydantic import BaseModel
 import semver
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+import csv
 
 from schemas.models import (
     AssetCreate,
@@ -15,6 +16,8 @@ from schemas.models import (
 from database.models import Asset, Version
 
 from util.s3 import assets_bucket
+from sqlalchemy import or_, func
+from sqlalchemy.sql.expression import case
 
 # https://fastapi.tiangolo.com/tutorial/sql-databases/#crud-utils
 
@@ -23,10 +26,35 @@ def read_asset(db: Session, asset_id: str):
     return db.execute(select(Asset.filter(Asset.id == asset_id)).limit(1)).first()
 
 
-def read_assets(db: Session, search: str | None = None, offset=0):
+def read_assets(db: Session, search: str | None = None, offset=0, sort: Literal["date_asc", "name_asc", "date_dsc", "name_dsc"] = "date_dsc",):
+    # 1. distance between str and asset name should be small
+    # 2. Each word in search are tested against keywords, 
     query = select(Asset)
-    if search != None:
-        query = query.filter(Asset.asset_name.ilike("%{}%".format(search)))
+    query = query.join(Version, Asset.id == Version.asset_id, isouter=True)
+    if search is not None:
+        # If search contains commas, split by commas, otherwise split by spaces
+        if ',' in search:
+            reader = csv.reader([search], skipinitialspace=True)
+            keywords = next(reader)
+        else:
+            keywords = search.split()
+        # check if asset name contains search
+        asset_name_conditions = []
+        asset_name_conditions.append(or_(*[Asset.asset_name.ilike(f"%{search}%")]))
+        # check if keywords contain search words
+        query = query.filter(or_(*asset_name_conditions, *[Asset.keywords.ilike(f"%{kw}%") for kw in keywords]))
+    
+    # sort by date or name
+    if sort == "date_asc":
+        query = query.order_by(Version.date.asc())
+    elif sort == "name_asc":
+        query = query.order_by(Asset.asset_name.asc())
+    elif sort == "date_dsc":
+        query = query.order_by(Version.date.desc())
+    elif sort == "name_dsc":
+        query = query.order_by(Asset.asset_name.desc())
+    
+    # limit and offset query, then return
     query = query.limit(24).offset(offset)
     return db.execute(query).scalars().all()
 

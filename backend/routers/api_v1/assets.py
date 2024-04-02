@@ -3,6 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Body, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 from util.crud import (
     AssetInfo,
@@ -31,13 +32,14 @@ test_asset = Asset(
     author_pennkey="benfranklin",
     id=test_uuid,
     image_uri="data:image/jpg;base64,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",
-    keywords="kitchen;utensil",
+    keywords="kitchen, utensil"
 )
 test_version = Version(
     author_pennkey="benfranklin",
     asset_id=test_uuid,
     semver="0.1",
     message="Initial version",
+    date=datetime(2021, 10, 1, 12, 0, 0),
 )
 
 
@@ -51,12 +53,12 @@ Allows searching by arbitrary strings, sorting by date or name, adding keyword f
 def get_assets(
     search: str | None = None,
     keywords: str | None = None,
-    sort: Literal["date", "name"] = "date",
+    sort: Literal["date_asc", "name_asc", "date_dsc", "name_dsc"] = "date_dsc",
     offset: int = 0,
     db: Session = Depends(get_db),
 ) -> Sequence[Asset]:
-    # TODO: add filters and fuzzy search!
-    return read_assets(db, search=(search if search != "" else None), offset=offset)
+    # TODO: add fuzzy search somehow
+    return read_assets(db, search=(search if search != "" else None), offset=offset, sort=sort)
 
 
 @router.post(
