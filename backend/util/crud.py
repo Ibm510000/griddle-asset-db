@@ -40,7 +40,7 @@ def read_assets(db: Session, search: str | None = None, offset=0, sort: Literal[
             keywords = search.split()
         # check if asset name contains search
         asset_name_conditions = []
-        asset_name_conditions.append(or_(*[Asset.asset_name.ilike(f"%{search}%")]))
+        asset_name_conditions.append(or_(*[Asset.asset_name.ilike(f"%{search}%")], *[Asset.asset_name.ilike(f"%{kw}%") for kw in keywords]))
         # check if keywords contain search words
         query = query.filter(or_(*asset_name_conditions, *[Asset.keywords.ilike(f"%{kw}%") for kw in keywords]))
     
