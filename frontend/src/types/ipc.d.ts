@@ -38,7 +38,7 @@ type GriddleIpcSchema = {
     response: { ok: boolean };
   };
   'assets:commit-changes': {
-    request: { asset_id: string; semver: string | null };
+    request: { asset_id: string; semver: string | null; message; is_major };
     response: { ok: boolean };
   };
   'assets:open-folder': {

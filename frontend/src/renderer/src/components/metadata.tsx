@@ -12,7 +12,6 @@ import { Asset } from '@renderer/types';
 import { syncAsset } from '@renderer/lib/util';
 
 export default function Metadata() {
-
   const { asset, versions } = useSelectedAsset();
   const { downloadedVersions, mutate } = useDownloads();
 
@@ -128,7 +127,7 @@ export default function Metadata() {
     return (
       <div className="flex h-full flex-col px-6 py-4">
         <div className="text-lg">Metadata</div>
-        <div>Please select an asset</div>
+        <div className="text-base-content/50">Select an asset</div>
       </div>
     );
   }
@@ -242,69 +241,77 @@ export default function Metadata() {
         </>
       ) : (
         <>
-        <div className='flex flex-col space-y-4'>
-          <div className="mt-2 text-2xl font-bold leading-tight tracking-tight text-base-content">
-            {asset.asset_name}
-          </div>
-          <div className="mt-2 font-medium text-base-content">Keywords: 
-            <div className='mt-2 flex flex-row flex-wrap gap-1'>
-              {asset.keywords?.split(',').map((keyword) => (
-                <span key={keyword} className="rounded bg-primary/90 px-2 py-1 mr-2 my-auto text-primary-content/100">
-                  {keyword}
-                </span>
-              ))}
+          <div className="flex flex-col space-y-4">
+            <div className="mt-2 text-2xl font-bold leading-tight tracking-tight text-base-content">
+              {asset.asset_name}
             </div>
-          </div>
-          <div className="font-medium text-base-content/90 flex flex-col">Author: 
-            <div className='font-bold text-base-content'>{asset.author_pennkey}</div>
-            </div>
-          <div className="max-h-60 overflow-y-auto">
-            <div className='flex flex-col' > Versions:
-            {versions?.map((version) => (
-              <div key={version.asset_id} className="flex flex-row">
-                <div className="text-base-content">{version.semver}:</div>
-                <div className="text-base-content/50 pl-2 mt-auto">{version.date.split("T")[0]}</div>
+            <div className="font-medium text-base-content">
+              <div className="flex flex-row flex-wrap gap-1">
+                {asset.keywords?.split(',').map((keyword) => (
+                  <span
+                    key={keyword}
+                    className="my-auto rounded bg-primary/90 px-2 py-1 text-xs text-primary-content/100"
+                  >
+                    {keyword}
+                  </span>
+                ))}
               </div>
-            ))}
             </div>
-          </div>
-          {!isDownloaded && (
-            <button
-              className="btn btn-outline btn-primary mt-2 flex flex-row items-center gap-2"
-              onClick={async () => {
-                await syncAsset({ asset_name: asset.asset_name, uuid: asset.id });
-                await mutate();
-              }}
-            >
-              <MdSync />
-              Sync
-            </button>
-          )}
-          {/* Update Asset Button */}
-          {isDownloaded && (
-            <>
+            <div className="flex flex-col font-medium text-base-content/90">
+              Author:
+              <div className="font-bold text-base-content">{asset.author_pennkey}</div>
+            </div>
+            <div className="max-h-60 overflow-y-auto">
+              <div className="flex flex-col">
+                {' '}
+                Versions:
+                {versions?.map((version) => (
+                  <div key={version.asset_id} className="flex flex-row">
+                    <div className="text-base-content">{version.semver}:</div>
+                    <div className="mt-auto pl-2 text-base-content/50">
+                      {version.date.split('T')[0]}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {!isDownloaded && (
               <button
-                className="btn btn-ghost btn-sm mt-6 flex flex-row flex-nowrap items-center gap-2 text-sm"
-                onClick={onOpenFolderClick}
+                className="btn btn-outline btn-primary mt-2 flex flex-row items-center gap-2"
+                onClick={async () => {
+                  await syncAsset({ asset_name: asset.asset_name, uuid: asset.id });
+                  await mutate();
+                }}
               >
-                <MdFolderOpen />
-                Open
+                <MdSync />
+                Sync
               </button>
-              <Link
-                className="btn btn-outline btn-primary mt-2"
-                to={{ pathname: `/update-asset`, search: `?id=${asset.id}` }}
-              >
-                Commit Changes
-              </Link>
-              <button
-                className="btn btn-ghost btn-sm mt-2 flex flex-row flex-nowrap items-center gap-2 text-sm"
-                onClick={onUnsyncClick}
-              >
-                <MdSyncDisabled className="h-5 w-5" />
-                Unsync
-              </button>
-            </>
-          )}
+            )}
+            {/* Update Asset Button */}
+            {isDownloaded && (
+              <>
+                <button
+                  className="btn btn-ghost btn-sm mt-6 flex flex-row flex-nowrap items-center gap-2 text-sm"
+                  onClick={onOpenFolderClick}
+                >
+                  <MdFolderOpen />
+                  Open
+                </button>
+                <Link
+                  className="btn btn-outline btn-primary mt-2"
+                  to={{ pathname: `/update-asset`, search: `?id=${asset.id}` }}
+                >
+                  Commit Changes
+                </Link>
+                <button
+                  className="btn btn-ghost btn-sm mt-2 flex flex-row flex-nowrap items-center gap-2 text-sm"
+                  onClick={onUnsyncClick}
+                >
+                  <MdSyncDisabled className="h-5 w-5" />
+                  Unsync
+                </button>
+              </>
+            )}
           </div>
           {asset.image_uri && (
             <img

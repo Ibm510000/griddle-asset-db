@@ -54,7 +54,8 @@ export default function AssetEntry({
           </button>
         </div>
         <div className="px-1">
-          {asset_name} -- {author_pennkey}
+          {asset_name}
+          <div className="text-xs text-base-content/50">{author_pennkey}</div>
         </div>
       </button>
     </li>
