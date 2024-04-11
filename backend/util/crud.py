@@ -54,11 +54,12 @@ def read_assets(
                 *[Asset.asset_name.ilike(f"%{kw}%") for kw in keywords],
             )
         )
-        # check if keywords contain search words
+        # check if keywords or author contain search words
         query = query.filter(
             or_(
                 *asset_name_conditions,
                 *[Asset.keywords.ilike(f"%{kw}%") for kw in keywords],
+                *[Asset.author_pennkey.ilike(f"%{search}%")],
             )
         )
 
