@@ -3,7 +3,6 @@ import { Asset } from '@renderer/types';
 import { MdCheckCircle, MdDownload, MdDownloading } from 'react-icons/md';
 
 import useDownloads from '@renderer/hooks/use-downloads';
-import { syncAsset } from '@renderer/lib/util';
 import { useState } from 'react';
 import funnygif from '../assets/funny.gif';
 
@@ -17,13 +16,13 @@ export default function AssetEntry({
   const { selectedId, setSelected } = useAssetSelectStore();
   const isSelected = selectedId === id;
 
-  const { mutate: mutateDownloads } = useDownloads();
+  const { mutate: mutateDownloads, syncAsset } = useDownloads();
 
   const [isDownloading, setDownloading] = useState(false);
 
   const onDownloadClick = async () => {
     setDownloading(true);
-    await syncAsset({ uuid: id, asset_name });
+    await syncAsset({ uuid: id });
     setDownloading(false);
     await mutateDownloads();
   };

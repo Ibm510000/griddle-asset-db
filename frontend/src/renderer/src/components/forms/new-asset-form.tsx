@@ -1,27 +1,36 @@
-import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import { Controller, SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
 
 import { useAssetsSearchRefetch } from '@renderer/hooks/use-assets-search';
+import useDownloads from '@renderer/hooks/use-downloads';
 import fetchClient from '@renderer/lib/fetch-client';
 import { encodeThumbnailImage } from '@renderer/lib/image-util';
-import useDownloads from '@renderer/hooks/use-downloads';
+import { Asset } from '@renderer/types';
+import TextInput from '../input/text-input';
+import KeywordsInput from '../input/keywords-input';
+import Label from '../input/label';
+import { BiImageAdd } from 'react-icons/bi';
+import { MdCheck, MdDelete } from 'react-icons/md';
 
 export interface NewAssetFormData {
   assetName: string;
-  keywords: string;
+  keywords: { keyword: string }[];
   thumbnailFile: File;
 }
 
-export default function NewAssetForm({
-  afterSubmit,
-}: {
-  afterSubmit?: SubmitHandler<NewAssetFormData>;
-}) {
+export default function NewAssetForm({ afterSubmit }: { afterSubmit?: SubmitHandler<Asset> }) {
   const refetchSearch = useAssetsSearchRefetch();
-  const { register, control, handleSubmit } = useForm<NewAssetFormData>({
-    defaultValues: { assetName: '', keywords: '', thumbnailFile: undefined },
-  });
-
   const { mutate: mutateDownloads } = useDownloads();
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = useForm<NewAssetFormData>({
+    defaultValues: { assetName: '', keywords: [], thumbnailFile: undefined },
+  });
+  // field array for keywords input
+  const keywordsFieldArray = useFieldArray({ control, name: 'keywords' });
 
   const submitHandler = async (data: NewAssetFormData) => {
     let image_uri;
@@ -41,7 +50,7 @@ export default function NewAssetForm({
     } = await fetchClient.POST('/api/v1/assets/', {
       body: {
         asset_name: data.assetName,
-        keywords: data.keywords,
+        keywords: data.keywords.map(({ keyword }) => keyword).join(','),
         image_uri,
       },
     });
@@ -56,115 +65,87 @@ export default function NewAssetForm({
       asset_name: data.assetName,
     });
 
+    // Refetch downloads and search results
     mutateDownloads();
     refetchSearch();
 
-    // Combine assetFiles from state with form data
-    if (afterSubmit) afterSubmit(data); // Call the onSubmit function provided by props
+    // Call the afterSubmit function provided by props
+    if (afterSubmit) afterSubmit(resData);
   };
 
   return (
     <form onSubmit={handleSubmit(submitHandler)}>
-      <div className="mt-4">
-        <label htmlFor="assetName" className="block text-sm font-medium text-gray-700">
-          Asset Name
-        </label>
-        <input
-          type="text"
-          id="assetName"
-          className="mt-1 block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          placeholder="Enter asset name"
+      <div className="flex flex-col gap-4">
+        <TextInput
+          label="Asset Name"
+          placeholder="myAwesomeAsset"
           {...register('assetName', { required: true })}
         />
-      </div>
-      <div className="mt-4">
-        <label htmlFor="keywords" className="block text-sm font-medium text-gray-700">
-          Keywords
-        </label>
-        <input
-          type="text"
-          id="keywords"
-          className="mt-1 block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          placeholder="Enter keywords"
-          {...register('keywords', { required: true })}
+        <KeywordsInput fieldArrayReturn={keywordsFieldArray} />
+
+        {/* Thumbnail upload controller */}
+        <Controller
+          control={control}
+          name="thumbnailFile"
+          rules={{ required: true }}
+          render={({ field: { value, onChange, ref } }) => (
+            <label
+              onDrop={(event) => {
+                event.preventDefault();
+                const droppedFile = event.dataTransfer.files[0];
+                onChange(droppedFile);
+              }}
+              onDragOver={(event) => event.preventDefault()}
+            >
+              <Label label="Upload Thumbnail" />
+              <div className="mt-1 flex justify-center rounded-md border-[1px] border-dashed border-base-content/40 px-6 pb-6 pt-5">
+                <div className="flex flex-col items-center text-center">
+                  <BiImageAdd className="text-3xl text-base-content/50" />
+                  <div className="mt-3 flex text-sm">
+                    <label className="relative cursor-pointer rounded-md font-medium text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-4 hover:text-primary">
+                      <span>Upload Thumbnail</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="sr-only"
+                        ref={ref}
+                        onChange={(event) => {
+                          onChange(event.target.files?.[0]);
+                        }}
+                      />
+                    </label>
+                    <p className="pl-1">or drag and drop</p>
+                  </div>
+                  <p className="mt-1 text-xs text-base-content/50">Image file</p>
+                  {value && (
+                    <div className="mt-4 flex items-center gap-x-2">
+                      <MdCheck className="text-success" />
+                      <p className="text-base-content">{value.name}</p>
+                      <button
+                        type="button"
+                        onClick={(evt) => {
+                          evt.stopPropagation();
+                          evt.preventDefault();
+                          // TODO: fix selecting the same file after removing
+                          onChange(undefined);
+                        }}
+                        className="btn btn-outline btn-error btn-xs"
+                      >
+                        <MdDelete />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </label>
+          )}
         />
       </div>
 
-      {/* Thumbnail upload controller */}
-      <Controller
-        control={control}
-        name="thumbnailFile"
-        rules={{ required: true }}
-        render={({ field: { value, onChange, ref } }) => (
-          <div
-            className="mt-4"
-            onDrop={(event) => {
-              event.preventDefault();
-              const droppedFile = event.dataTransfer.files[0];
-              onChange(droppedFile);
-            }}
-            onDragOver={(event) => event.preventDefault()}
-          >
-            <label htmlFor="thumbnailUpload" className="block text-sm font-medium text-gray-700">
-              Upload Thumbnail
-            </label>
-            <div className="mt-1 flex justify-center rounded-md border-2 border-dashed border-gray-300 px-6 pb-6 pt-5">
-              <div className="space-y-1 text-center">
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
-                  stroke="currentColor"
-                  fill="none"
-                  viewBox="0 0 48 48"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M27 4v16h16M27 4l17 17M43 21H5M13 12h22v9l5 4V8l-5 4z"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <div className="flex text-sm text-gray-600">
-                  <label
-                    htmlFor="thumbnail-upload"
-                    className="relative cursor-pointer rounded-md bg-white font-medium text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:text-indigo-500"
-                  >
-                    <span>Upload Thumbnail</span>
-                    <input
-                      id="thumbnail-upload"
-                      type="file"
-                      accept="image/*"
-                      className="sr-only"
-                      ref={ref}
-                      onChange={(event) => {
-                        onChange(event.target.files?.[0]);
-                      }}
-                    />
-                  </label>
-                  <p className="pl-1">or drag and drop</p>
-                </div>
-                <p className="text-xs text-gray-500">Image file</p>
-                {value && (
-                  <div>
-                    <p className="text-xs text-gray-500">{value.name}</p>
-                    <button
-                      type="button"
-                      onClick={() => onChange(undefined)}
-                      className="text-red-500"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      />
-
-      <div className="mt-4">
-        <button type="submit" className="btn btn-primary">
+      <div className="mt-6 flex w-full justify-center">
+        <button type="submit" className="btn btn-primary btn-wide" disabled={isSubmitting}>
           Create
+          {isSubmitting && <span className="loading loading-spinner ml-2" />}
         </button>
       </div>
     </form>

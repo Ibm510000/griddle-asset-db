@@ -44,8 +44,6 @@ export function useAssetsSearch() {
       },
     });
 
-    console.log(data);
-
     if (error) throw error;
     if (!response.status.toString().startsWith('2'))
       throw new Error(`Non-OK response with code ${response.status}: ${response.statusText}`);

@@ -9,11 +9,15 @@ import useDownloads from '@renderer/hooks/use-downloads';
 import fetchClient from '@renderer/lib/fetch-client';
 import { encodeThumbnailImage } from '@renderer/lib/image-util';
 import { Asset } from '@renderer/types';
-import { syncAsset } from '@renderer/lib/util';
+import { useAssetsSearchRefetch } from '@renderer/hooks/use-assets-search';
+
+const thomasImage =
+  'data:image/jpg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAgICAgJCAkKCgkNDgwODRMREBARExwUFhQWFBwrGx8bGx8bKyYuJSMlLiZENS8vNUROQj5CTl9VVV93cXecnNEBCAgICAkICQoKCQ0ODA4NExEQEBETHBQWFBYUHCsbHxsbHxsrJi4lIyUuJkQ1Ly81RE5CPkJOX1VVX3dxd5yc0f/CABEIAEAAQAMBIgACEQEDEQH/xAAzAAACAgMBAQAAAAAAAAAAAAAFBgMHAAIEAQgBAQEBAQEBAAAAAAAAAAAAAAQCAwAFBv/aAAwDAQACEAMQAAAA79vZPovDxeK0SVLOzIwgrPo7EGxWgHy7ydS5VV4VkR3NEXJYr4LRV2vUCxKokE5kA5IZlqJOAGYb37jBjtjhuAgkRJWNOlzqyO9UF3W0i3kd/8QALRAAAgEEAQIGAQIHAAAAAAAAAQIDAAQFERIhMQYTIjJBUXEUYQcQFTNSgpH/2gAIAQEAAT8AArVIm6zviezwz+QImmuSobj2Vd/Zo+OM40vLnCF/wEdYrxylxNHDeQopYhQ60nGRA69VPY1xoClFZfJJicbNeFOTDSov27dBUjXN/dSSuzSSyOWZj8k1HgmKcnk0aeB4ZiOxU9DXgPIXVzNd28rMyJGrAk0VoLSivF9t5/hu9IXbRcJR/q1Wz/ooYmCIWZQx3snr+Knu5Fto5RGmm+91+livcZessamZEMgYb36evY1/DhHN3k5APQIY13RFBaC1lbd7jD5KFF5NJayKo+yRUotEjjTiGYAAD8UtzaPavEqB2HZdGsQ9lMkiIApKMhH5FeD7FrOLIKigW5aMRtrqxUaJorWameO3g4MRuXr/AM3WHmeSOUtIX0RrZ3qpJJv6peMZGKqPSAx9GtV4jxrC8EyllWdQ4ZfhgPUKghjZiiwyLIR7/MfVYOzMV1EHLMS42zdzTH4B0KS5R5nh5tzU+0xkaHb3Hv2o579cQzNGioS2idKv5JrF5OIiKOJRuZtmQPv2ntxq4dEv5dMFZogT10SfsfvU+blyMEtsVCmNiVIGwwU63+1RTZVLgKFBXferRpIp0Lt12DUeUma5aG6R44ydCRdAdOvX81ZPJHdp590BHIwLEnso31B30q6waMLlrXhHEYiIGbcrlz6jz+h8ChaPDIzRXNpbweYP7pdiARrq5C9Pmrl8fawsrZITOSEZopBIencqvEAg/bGsdlXu74xKvlxFCVUsznYAGuTUXkjYEdvmlnJbke1Z3LNfXzNE7CJFCLokb49d1a+IZlQJcL5gGtOPf0+996yOemN0zJGebOnrLKInQDWvQazeau76UxMyrGje1DtSV+QaJJ7moJ5LeZJozp0OxS+J4Wj1JasH+eJBFZHOzXcXkxp5Ufz12zfz/8QAIBEAAgICAgIDAAAAAAAAAAAAAQIAEQMSITEiYTJBcv/aAAgBAgEBPwDaZ85Qar8oufMpFm4uQMLELTMLa/UP6ERqUQnyHEyrttOyOJmfVgAG4o8Dv1AxGMNZ56u7m7FgSxmyj7uByJ//xAAkEQABAgUCBwAAAAAAAAAAAAABABECAwQSISIxEBMyQUJhgf/aAAgBAwEBPwBlT095eLZRU0sjpZRy7IiFYqYafqZTpR5hQGk5UqK0w+14qVLuBcjuMnZEambY5QAAwE+OH//Z';
 
 export default function Metadata() {
   const { asset, versions } = useSelectedAsset();
-  const { downloadedVersions, mutate } = useDownloads();
+  const { downloadedVersions, syncAsset, unsyncAsset, isValidating } = useDownloads();
+  const refetchSearch = useAssetsSearchRefetch()
 
   // versions also available here for showing asset versions!
 
@@ -88,27 +92,8 @@ export default function Metadata() {
     asset.image_uri = image_uri;
 
     data.thumbnailFile = undefined;
-  };
 
-  const onUnsyncClick = async () => {
-    console.log('unsyncing asset', asset);
-    if (!asset) {
-      console.log('asset not found');
-      return;
-    }
-
-    const downloaded = downloadedVersions?.find(({ asset_id }) => asset_id === asset.id);
-    if (!downloaded) {
-      console.log('asset not downloaded');
-      return;
-    }
-
-    await window.api.ipc('assets:remove-version', {
-      asset_id: asset.id,
-      semver: downloaded.semver, // TODO: make this more robust
-    });
-
-    await mutate();
+    refetchSearch()
   };
 
   const onOpenFolderClick = async () => {
@@ -240,47 +225,38 @@ export default function Metadata() {
           </form>
         </>
       ) : (
-        <>
-          <div className="flex flex-col space-y-4">
-            <div className="mt-2 text-2xl font-bold leading-tight tracking-tight text-base-content">
-              {asset.asset_name}
+        <div>
+          {asset.image_uri && (
+            <img
+              src={asset.image_uri}
+              alt={asset.asset_name}
+              className="mt-2 aspect-square w-full rounded-lg bg-base-300"
+            />
+          )}
+          <div className="mt-4 text-2xl font-bold leading-tight tracking-tight text-base-content">
+            {asset.asset_name}
+          </div>
+          {/* Keyword list */}
+          <div className="mt-2 font-medium text-base-content">
+            <div className="flex flex-row flex-wrap gap-1">
+              {asset.keywords?.split(',').map((keyword) => (
+                <span
+                  key={keyword}
+                  className="my-auto rounded bg-primary/90 px-2 py-1 text-xs text-primary-content/100"
+                >
+                  {keyword}
+                </span>
+              ))}
             </div>
-            <div className="font-medium text-base-content">
-              <div className="flex flex-row flex-wrap gap-1">
-                {asset.keywords?.split(',').map((keyword) => (
-                  <span
-                    key={keyword}
-                    className="my-auto rounded bg-primary/90 px-2 py-1 text-xs text-primary-content/100"
-                  >
-                    {keyword}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className="flex flex-col font-medium text-base-content/90">
-              Author:
-              <div className="font-bold text-base-content">{asset.author_pennkey}</div>
-            </div>
-            <div className="max-h-60 overflow-y-auto">
-              <div className="flex flex-col">
-                {' '}
-                Versions:
-                {versions?.map((version) => (
-                  <div key={version.asset_id} className="flex flex-row">
-                    <div className="text-base-content">{version.semver}:</div>
-                    <div className="mt-auto pl-2 text-base-content/50">
-                      {version.date.split('T')[0]}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          </div>
+          <div className="mt-6">
+            {/* Sync button */}
             {!isDownloaded && (
               <button
-                className="btn btn-outline btn-primary mt-2 flex flex-row items-center gap-2"
-                onClick={async () => {
-                  await syncAsset({ asset_name: asset.asset_name, uuid: asset.id });
-                  await mutate();
+                className="btn btn-outline btn-primary flex w-full flex-row items-center gap-2"
+                disabled={isValidating}
+                onClick={() => {
+                  syncAsset({ uuid: asset.id });
                 }}
               >
                 <MdSync />
@@ -291,21 +267,22 @@ export default function Metadata() {
             {isDownloaded && (
               <>
                 <button
-                  className="btn btn-ghost btn-sm mt-6 flex flex-row flex-nowrap items-center gap-2 text-sm"
+                  className="btn btn-ghost btn-sm flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
                   onClick={onOpenFolderClick}
                 >
                   <MdFolderOpen />
                   Open
                 </button>
                 <Link
-                  className="btn btn-outline btn-primary mt-2"
+                  className="btn btn-outline btn-primary mt-2 w-full justify-start"
                   to={{ pathname: `/update-asset`, search: `?id=${asset.id}` }}
                 >
                   Commit Changes
                 </Link>
                 <button
-                  className="btn btn-ghost btn-sm mt-2 flex flex-row flex-nowrap items-center gap-2 text-sm"
-                  onClick={onUnsyncClick}
+                  className="btn btn-ghost btn-sm mt-2 flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
+                  disabled={isValidating}
+                  onClick={() => unsyncAsset({ uuid: asset.id })}
                 >
                   <MdSyncDisabled className="h-5 w-5" />
                   Unsync
@@ -313,14 +290,44 @@ export default function Metadata() {
               </>
             )}
           </div>
-          {asset.image_uri && (
-            <img
-              src={asset.image_uri}
-              alt={asset.asset_name}
-              className="mt-auto aspect-square w-full rounded-lg bg-base-300"
-            />
-          )}
-        </>
+          <h3 className="divider mt-12 text-base-content/50">Contributors</h3>
+          {/* Original author */}
+          <div className="flex flex-row items-center gap-x-4">
+            <div className="avatar">
+              <img
+                // TODO: Replace this with a real image
+                src={thomasImage}
+                className="w-8 rounded-full"
+              />
+            </div>
+            <div>
+              <div className="text-xs opacity-60">Original Author</div>
+              <div className="font-semibold text-base-content">{asset.author_pennkey}</div>
+            </div>
+          </div>
+          {/* Last 3 versions */}
+          <ul className="mt-8">
+            {versions?.map(({ date, message, semver, author_pennkey }) => (
+              <li className="chat chat-start space-y-0.5" key={`${asset.id}_${semver}`}>
+                <div className="avatar chat-image">
+                  <div className="w-10 rounded-full">
+                    <img src={thomasImage} />
+                  </div>
+                </div>
+                <div className="chat-header text-xs tracking-wide text-base-content/40">
+                  <span className="text-base-content/70">{author_pennkey}</span> on{' '}
+                  <time className="text-base-content/70">
+                    {new Date(date).toLocaleDateString()}
+                  </time>
+                </div>
+                <div className="chat-bubble- chat-bubble">
+                  <span className="badge -ml-1 mr-1 font-mono">{semver}</span> {message}
+                </div>
+                <hr />
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );

@@ -18,8 +18,6 @@ export default function AssetList() {
     [assets, downloadedVersions],
   );
 
-  console.log(downloadedVersions);
-
   return (
     <>
       {/* Main body (asset browser) */}

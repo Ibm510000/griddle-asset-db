@@ -1,6 +1,8 @@
 import { SubmitHandler, useForm } from 'react-hook-form';
 
-import { useAssetsSearchRefetch } from '@renderer/hooks/use-assets-search';
+import { useSelectedAsset } from '@renderer/hooks/use-asset-select';
+import useDownloads from '@renderer/hooks/use-downloads';
+import TextInput from '../input/text-input';
 
 export interface UpdateAssetFormData {
   message: string; // commit message
@@ -14,8 +16,14 @@ interface UpdateAssetFormProps {
 
 // POST to /api/v1/assets/{uuid}/versions - Upload new version for a given asset
 export default function UpdateAssetForm({ uuid, afterSubmit }: UpdateAssetFormProps) {
-  const refetchSearch = useAssetsSearchRefetch();
-  const { register, handleSubmit } = useForm<UpdateAssetFormData>({
+  const { commitChanges } = useDownloads();
+  const { mutate: mutateSelectedAsset } = useSelectedAsset();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = useForm<UpdateAssetFormData>({
     defaultValues: {
       message: '',
       is_major: false,
@@ -34,14 +42,15 @@ export default function UpdateAssetForm({ uuid, afterSubmit }: UpdateAssetFormPr
     }
 
     // Calling fetchClient.POST()
-    await window.api.ipc('assets:commit-changes', {
+    await commitChanges({
       asset_id: uuid,
       semver: downloaded.semver,
       message: data.message,
       is_major: data.is_major,
     });
 
-    await refetchSearch();
+    // refetch selected asset in case it's the one we updated
+    mutateSelectedAsset();
 
     // Combine assetFiles from state with form data
     if (afterSubmit) afterSubmit(data); // Call the onSubmit function provided by props
@@ -49,18 +58,11 @@ export default function UpdateAssetForm({ uuid, afterSubmit }: UpdateAssetFormPr
 
   return (
     <form onSubmit={handleSubmit(submitHandler)}>
-      <div className="mt-4">
-        <label htmlFor="message" className="block text-sm font-medium text-gray-700">
-          Commit Message
-        </label>
-        <input
-          type="text"
-          id="message"
-          className="mt-1 block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          placeholder="Enter commit message"
-          {...register('message', { required: true })}
-        />
-      </div>
+      <TextInput
+        label="Commit Message"
+        placeholder="Add a mug on the table"
+        {...register('message', { required: true })}
+      />
 
       <label className="mt-4 flex flex-row items-center gap-3">
         <div className="mt-1">
@@ -70,14 +72,15 @@ export default function UpdateAssetForm({ uuid, afterSubmit }: UpdateAssetFormPr
             {...register('is_major')}
           />
         </div>
-        <div className="block text-sm font-medium text-gray-700">
+        <div className="block text-sm font-medium text-base-content/80">
           Is This a Major Version Update?
         </div>
       </label>
 
-      <div className="mt-4">
-        <button type="submit" className="btn btn-primary">
+      <div className="mt-6 flex w-full justify-center">
+        <button type="submit" className="btn btn-primary btn-wide" disabled={isSubmitting}>
           Submit Changes
+          {isSubmitting && <span className="loading loading-spinner ml-2" />}
         </button>
       </div>
     </form>

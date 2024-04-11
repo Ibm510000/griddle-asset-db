@@ -1,4 +1,4 @@
-from settings import DATABASE_URI, is_dev
+from settings import DATABASE_URL, is_dev
 
 from fastapi import FastAPI
 from fastapi.concurrency import asynccontextmanager
@@ -12,7 +12,7 @@ from util.sqladmin import config_sqladmin
 
 def init_db():
     alembic_cfg = Config("alembic.ini")
-    alembic_cfg.set_main_option("sqlalchemy.url", DATABASE_URI)
+    alembic_cfg.set_main_option("sqlalchemy.url", DATABASE_URL)
     command.upgrade(alembic_cfg, "head")
 
 
