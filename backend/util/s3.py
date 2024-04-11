@@ -8,4 +8,4 @@ s3 = boto3.resource(
     aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
 )
 
-assets_bucket = s3.Bucket("griddle-assets")
+assets_bucket = s3.create_bucket(Bucket="griddle-assets")
