@@ -8,5 +8,11 @@ To run a dev database and localstack (S3 simulator) run `docker-compose up -d`. 
 
 ### Dev Environment Set-Up
 Python 3.10 required
+
 Install Docker Desktop 
-Follow backend instructions, and install pipenv if necessary. (```pip install pipenv```)
+
+Follow backend instructions (found in backend README). 
+
+Install ```pipenv``` if necessary (```pip install pipenv```)
+
+Install ```uvicorn``` if necessary (```pip install uvicorn```)
