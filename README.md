@@ -11,8 +11,10 @@ Python 3.10 required
 
 Install Docker Desktop 
 
-Follow backend instructions (found in backend README). 
+Follow backend instructions (found in backend README)
 
 Install ```pipenv``` if necessary (```pip install pipenv```)
 
 Install ```uvicorn``` if necessary (```pip install uvicorn```)
+
+Follow frontend instructions (found in frontend README)
