@@ -133,19 +133,6 @@ export default function Metadata() {
         <>
           <form onSubmit={handleSubmit(handleSaveClick)}>
             <div className="mt-4">
-              <label htmlFor="asset_name" className="block text-sm font-medium text-gray-700">
-                Asset Name
-              </label>
-              <input
-                type="text"
-                id="asset_name"
-                className="mt-1 block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                value={editedAsset?.asset_name}
-                onChange={(e) => handleInputChange(e, 'asset_name')}
-                required
-              />
-            </div>
-            <div className="mt-4">
               <label htmlFor="keywords" className="block text-sm font-medium text-gray-700">
                 Keywords
               </label>
