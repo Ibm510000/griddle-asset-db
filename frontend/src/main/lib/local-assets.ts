@@ -1,6 +1,6 @@
 import Store from 'electron-store';
 import { existsSync } from 'node:fs';
-import { createWriteStream } from 'fs';
+import { createWriteStream, readFileSync, readdirSync } from 'fs';
 import fsPromises from 'node:fs/promises';
 import path from 'node:path';
 import extract from 'extract-zip';
@@ -9,6 +9,7 @@ import { app, shell } from 'electron';
 import fetchClient from './fetch-client';
 import { DownloadedEntry } from '../../types/ipc';
 import archiver from 'archiver';
+
 
 const assetsStore = new Store<{ versions: DownloadedEntry[]; downloadFolder: string }>({
   defaults: { versions: [], downloadFolder: path.join(app.getPath('documents'), 'Griddle') },
@@ -60,6 +61,30 @@ export async function openFolder(asset_id: string, semver: string | null) {
   if (!stored) return;
 
   shell.openPath(path.join(getDownloadFolder(), stored.folderName));
+}
+
+export async function readContent(asset_id: string, semver: string | null) {
+  const stored = getStoredVersions().find((v) => v.asset_id === asset_id && v.semver === semver);
+  if (!stored) return;
+
+  const folderPath = path.join(getDownloadFolder(), stored.folderName);
+
+  try {
+    // Read the directory contents
+    const files = readdirSync(folderPath);
+    // Optionally read file data if needed
+    const fileData = files.map(file => {
+      return {
+        name: file,
+        content: readFileSync(path.join(folderPath, file), 'utf-8'), // adjust the encoding as needed
+      };
+    });
+
+    return fileData;
+  } catch (error) {
+    console.error('Failed to read the folder:', error);
+    return [];
+  }
 }
 
 async function zipFolder(sourceFolder: string, zipFilePath: string): Promise<void> {

@@ -5,8 +5,14 @@ import {
   downloadVersion,
   getStoredVersions,
   openFolder,
+  readContent,
   removeVersion,
 } from './lib/local-assets';
+
+type FileDetails = {
+  name: string;
+  content: string;
+};
 
 // Types for these can be found in `src/types/ipc.d.ts`
 const messageHandlers: MessageHandlers = {
@@ -41,6 +47,11 @@ const messageHandlers: MessageHandlers = {
     console.log(`Opening folder for ${asset_id}@${semver}`);
     await openFolder(asset_id, semver);
     return { ok: true };
+  },
+  'assets:read-content': async (_, { asset_id, semver }) => {
+    console.log(`Reading Content for ${asset_id}@${semver}`);
+    const files = await readContent(asset_id, semver);
+    return { ok: true, files };
   },
 };
 

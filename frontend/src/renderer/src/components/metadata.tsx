@@ -281,7 +281,7 @@ export default function Metadata() {
                 </Link>
                 <Link
                   className="btn btn-outline btn-primary mt-2 w-full justify-start"
-                  to={{ pathname: `/preview-asset`}}
+                  to={{ pathname: `/preview-asset`, search: `?id=${asset.id}` }}
                 >
                   Asset Preview
                 </Link>

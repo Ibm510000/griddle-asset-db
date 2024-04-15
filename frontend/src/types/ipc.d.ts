@@ -16,6 +16,11 @@ type DownloadedEntry = {
   folderName: string;
 };
 
+type FileDetails = {
+  name: string;
+  content: string;
+};
+
 type GriddleIpcSchema = {
   'assets:list-downloaded': {
     request: null;
@@ -44,6 +49,10 @@ type GriddleIpcSchema = {
   'assets:open-folder': {
     request: { asset_id: string; semver: string | null };
     response: { ok: boolean };
+  };
+  'assets:read-content': {
+    request: { asset_id: string; semver: string | null };
+    response: { ok: boolean; files?: FileDetails[] }; // Modified to include file details
   };
 };
 
