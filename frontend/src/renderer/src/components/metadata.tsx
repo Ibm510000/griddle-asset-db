@@ -279,6 +279,12 @@ export default function Metadata() {
                 >
                   Commit Changes
                 </Link>
+                <Link
+                  className="btn btn-outline btn-primary mt-2 w-full justify-start"
+                  to={{ pathname: `/preview-asset`}}
+                >
+                  Asset Preview
+                </Link>
                 <button
                   className="btn btn-ghost btn-sm mt-2 flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
                   disabled={isValidating}
