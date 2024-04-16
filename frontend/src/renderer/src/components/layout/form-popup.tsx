@@ -12,16 +12,17 @@ export default function FormPopup({
   return (
     <>
       <motion.div
-        className="absolute inset-0 z-10 bg-black/20"
+        className="absolute inset-0 z-10 bg-black/30"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
+        transition={{ duration: 0.25 }}
       />
       <motion.div
-        className="absolute inset-0 z-10 overflow-y-auto"
+        className="absolute inset-0 z-10 origin-top overflow-y-auto"
         onClick={onClose}
-        initial={{ y: 30, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ ease: 'easeOut' }}
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ ease: 'easeOut', duration: 0.25 }}
       >
         <div
           className="mx-auto my-6 w-full max-w-xl rounded-box bg-base-100 px-6 py-4 shadow-lg"

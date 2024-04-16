@@ -1,15 +1,15 @@
 import { Controller, SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
+import { BiImageAdd } from 'react-icons/bi';
+import { MdCheck, MdDelete } from 'react-icons/md';
 
 import { useAssetsSearchRefetch } from '@renderer/hooks/use-assets-search';
 import useDownloads from '@renderer/hooks/use-downloads';
 import fetchClient from '@renderer/lib/fetch-client';
 import { encodeThumbnailImage } from '@renderer/lib/image-util';
 import { Asset } from '@renderer/types';
-import TextInput from '../input/text-input';
 import KeywordsInput from '../input/keywords-input';
 import Label from '../input/label';
-import { BiImageAdd } from 'react-icons/bi';
-import { MdCheck, MdDelete } from 'react-icons/md';
+import TextInput from '../input/text-input';
 
 export interface NewAssetFormData {
   assetName: string;

@@ -7,6 +7,8 @@ import { RouterProvider, createHashRouter } from 'react-router-dom';
 import NewAssetView from './routes/new-asset-view';
 import UpdateAssetView from './routes/update-asset-view';
 import AssetPreviewView from './routes/asset-preview-view';
+import UserLoginView from './routes/user-login-view';
+import NewUserView from './routes/new-user-view';
 
 const router = createHashRouter([
   {
@@ -24,6 +26,14 @@ const router = createHashRouter([
       {
         path: 'preview-asset',
         element: <AssetPreviewView />,
+      },
+      {
+        path: 'user-login',
+        element: <UserLoginView />,
+      },
+      {
+        path: 'new-user',
+        element: <NewUserView />,
       },
     ],
   },
