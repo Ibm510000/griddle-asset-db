@@ -1,42 +1,36 @@
-# frontend
+# Griddle &mdash; Frontend
 
-An Electron application with React and TypeScript
+An Electron (+ Vite) application with React and TypeScript.
 
-## Recommended IDE Setup
+## Development
 
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+See the [wiki](../../wiki) for a full development guide.
 
-## Project Setup
-
-### Install
+Initial setup:
 
 ```bash
-$ npm install
+npm install
 ```
 
-### Development
+Running a development server:
 
 ```bash
-$ npm run dev
+npm run dev
 ```
 
-To sync OpenAPI types with the backend, make sure to have the backend running. Then:
-
-```bash
-$ npm run backend:sync
-```
-
-This populates `src/types/schema.d.ts`.
-
-### Build
+Build:
 
 ```bash
 # For windows
-$ npm run build:win
+npm run build:win
 
 # For macOS
-$ npm run build:mac
+npm run build:mac
 
 # For Linux
-$ npm run build:linux
+npm run build:linux
 ```
+
+## Contributing
+
+See the [wiki](../../../wiki) for tips on contributing.
