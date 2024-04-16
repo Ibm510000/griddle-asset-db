@@ -6,6 +6,7 @@ import { themeChange } from 'theme-change';
 import ThemeSelector from './theme-selector';
 
 import { CiSearch } from 'react-icons/ci';
+import UserDropdown from './user-dropdown';
 
 const Navbar = () => {
   const [selectedTheme, setSelectedTheme] = useState('light'); // default theme
@@ -35,11 +36,6 @@ const Navbar = () => {
           + New Asset
         </Link>
 
-        {/* Update Asset Button */}
-        {/* <Link className="btn btn-outline" to={'/update-asset'}>
-          + Update Asset
-        </Link> */}
-
         {/* Search Bar */}
         <div className="form-control relative w-1/3">
           <CiSearch className="absolute left-3 top-1/2 h-6 w-6 -translate-y-1/2 transform text-gray-500" />
@@ -57,6 +53,9 @@ const Navbar = () => {
       </div>
 
       <ThemeSelector selectedTheme={selectedTheme} setSelectedTheme={setSelectedTheme} />
+
+      {/* User info (login, signup, settings) */}
+      <UserDropdown />
 
       {/* Placeholder for Right-Side Content */}
       <div>{/* Content such as profile menu or additional buttons could go here */}</div>
