@@ -9,11 +9,6 @@ import {
   removeVersion,
 } from './lib/local-assets';
 
-type FileDetails = {
-  name: string;
-  content: string;
-};
-
 // Types for these can be found in `src/types/ipc.d.ts`
 const messageHandlers: MessageHandlers = {
   'assets:list-downloaded': async () => {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import FileTree from './layout/file-tree';
 
 interface AssetPreviewProps {
     uuid: string; // asset uuid
@@ -48,19 +49,6 @@ export default function AssetPreview({ uuid }: AssetPreviewProps) {
       }
     
       return (
-        <div>
-          <h1>Asset Files</h1>
-          {files.length > 0 ? (
-            <ul>
-              {files.map((file, index) => (
-                <li key={index}>
-                  <strong>{file.name}</strong> 
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>No files found.</p>
-          )}
-        </div>
+        <FileTree files={files}/>
       );
 }
