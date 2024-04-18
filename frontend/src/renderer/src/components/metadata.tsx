@@ -3,6 +3,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { CiEdit } from 'react-icons/ci';
 import { MdFolderOpen, MdSync, MdSyncDisabled } from 'react-icons/md';
 import { Link } from 'react-router-dom';
+import VersionSelector from './version-selector';
 
 import { useSelectedAsset } from '@renderer/hooks/use-asset-select';
 import useDownloads from '@renderer/hooks/use-downloads';
@@ -20,6 +21,7 @@ export default function Metadata() {
   const refetchSearch = useAssetsSearchRefetch()
 
   // versions also available here for showing asset versions!
+  const [selectedVersion, setSelectedVersion] = useState('1.4'); // default to most recent version
 
   const isDownloaded = useMemo(() => {
     return downloadedVersions?.findIndex(({ asset_id }) => asset_id === asset?.id) !== -1;
@@ -252,7 +254,8 @@ export default function Metadata() {
             )}
             {/* Update Asset Button */}
             {isDownloaded && (
-              <>
+              <>          
+                <VersionSelector selectedVersion={selectedVersion} setSelectedVersion={setSelectedVersion} />
                 <button
                   className="btn btn-ghost btn-sm flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
                   onClick={onOpenFolderClick}
