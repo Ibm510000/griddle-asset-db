@@ -1,13 +1,7 @@
-import { MdPalette } from 'react-icons/md';
 import PropTypes from 'prop-types';
 
-const VersionSelector = ({ selectedVersion, setSelectedVersion }) => {
-  const versions = [
-    '1.4',
-    '1.3',
-    '1.0',
-  ];
-  
+const VersionSelector = ({ selectedVersion, setSelectedVersion , allVersions}) => {
+  const versions = allVersions;
 
   return (
     <div className="dropdown dropdown-end w-full">
@@ -21,7 +15,7 @@ const VersionSelector = ({ selectedVersion, setSelectedVersion }) => {
             className={item === selectedVersion ? 'rounded-lg bg-base-300 bg-opacity-60' : ''}
             onClick={() => setSelectedVersion(item)}
           >
-            <a data-set-theme={item}>{item}</a>
+            <a>{item}</a>
           </li>
         ))}
       </ul>
@@ -33,6 +27,7 @@ const VersionSelector = ({ selectedVersion, setSelectedVersion }) => {
 VersionSelector.propTypes = {
   selectedVersion: PropTypes.string.isRequired,
   setSelectedVersion: PropTypes.func.isRequired,
+  allVersions: PropTypes.array.isRequired,
 };
 
 export default VersionSelector;
