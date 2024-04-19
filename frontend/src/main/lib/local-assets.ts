@@ -9,7 +9,6 @@ import { app, shell } from 'electron';
 import fetchClient from './fetch-client';
 import { DownloadedEntry } from '../../types/ipc';
 import archiver from 'archiver';
-import { folder } from 'jszip';
 
 const assetsStore = new Store<{ versions: DownloadedEntry[]; downloadFolder: string }>({
   defaults: { versions: [], downloadFolder: path.join(app.getPath('documents'), 'Griddle') },
@@ -35,10 +34,14 @@ export function getStoredVersions() {
 }
 
 export async function getDownloadsJSON(): Promise<{assetName:string, downloadedVersion:string}[]> {
-  const FD = await fsPromises.open(path.join(getDownloadFolder(), 'downloads.json'))
-  const data = await FD.readFile()
-  await FD.close()
-  return JSON.parse(data.toString())
+  try {
+    const FD = await fsPromises.open(path.join(getDownloadFolder(), 'downloads.json'), 'r')
+    const data = await FD.readFile()
+    await FD.close()
+    return JSON.parse(data.toString())
+  } catch (ENOENT) {
+    return []
+  }
 }
 
 export async function writeDownloadsJSON(updatedDownloadsJSON: {assetName:string, downloadedVersion:string}[]) {
