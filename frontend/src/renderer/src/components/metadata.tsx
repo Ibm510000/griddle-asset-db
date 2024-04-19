@@ -282,7 +282,7 @@ export default function Metadata() {
                 <button
                   className="btn btn-ghost btn-sm mt-2 flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
                   disabled={isValidating}
-                  onClick={() => unsyncAsset({ uuid: asset.id })}
+                  onClick={() => unsyncAsset({ uuid: asset.id, assetName: asset.asset_name })}
                 >
                   <MdSyncDisabled className="h-5 w-5" />
                   Unsync

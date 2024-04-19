@@ -50,7 +50,7 @@ export default function useDownloads() {
     });
   }
 
-  function unsyncAsset({ uuid }: { uuid: string }) {
+  function unsyncAsset({ uuid, assetName }: { uuid: string, assetName: string}) {
     return mutate(async () => {
       console.log('unsyncing asset', uuid);
 
@@ -63,6 +63,7 @@ export default function useDownloads() {
       await window.api.ipc('assets:remove-version', {
         asset_id: uuid,
         semver: downloaded.semver, // TODO: make this more robust
+        assetName: assetName,
       });
 
       return fetcher();

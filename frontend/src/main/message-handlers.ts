@@ -28,8 +28,8 @@ const messageHandlers: MessageHandlers = {
     await downloadVersion({ asset_id, semver });
     return { ok: true };
   },
-  'assets:remove-version': async (_, { asset_id, semver }) => {
-    await removeVersion({ asset_id, semver });
+  'assets:remove-version': async (_, { asset_id, semver, assetName }) => {
+    await removeVersion({ asset_id, semver, assetName });
     return { ok: true };
   },
   'assets:commit-changes': async (_, { asset_id, semver, message, is_major }) => {

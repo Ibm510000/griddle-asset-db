@@ -13,7 +13,7 @@ export default function NewAssetView() {
       <NewAssetForm
         afterSubmit={({ id }) => {
           navigate('/');
-          setSelectedId(id);
+          setSelectedId(id, null);
         }}
       />
     </FormPopup>

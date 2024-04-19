@@ -304,7 +304,14 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          'application/json': unknown;
+          'application/json': {
+            asset_id: string,
+            date: string,
+            file_key: string,
+            author_pennkey: string,
+            semver: string,
+            message: string
+          };
         };
       };
       /** @description Not found */

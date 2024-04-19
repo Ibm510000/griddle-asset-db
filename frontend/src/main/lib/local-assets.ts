@@ -9,6 +9,7 @@ import { app, shell } from 'electron';
 import fetchClient from './fetch-client';
 import { DownloadedEntry } from '../../types/ipc';
 import archiver from 'archiver';
+import { folder } from 'jszip';
 
 const assetsStore = new Store<{ versions: DownloadedEntry[]; downloadFolder: string }>({
   defaults: { versions: [], downloadFolder: path.join(app.getPath('documents'), 'Griddle') },
@@ -33,6 +34,19 @@ export function getStoredVersions() {
   return assetsStore.get('versions', []);
 }
 
+export async function getDownloadsJSON(): Promise<{assetName:string, downloadedVersion:string}[]> {
+  const FD = await fsPromises.open(path.join(getDownloadFolder(), 'downloads.json'))
+  const data = await FD.readFile()
+  await FD.close()
+  return JSON.parse(data.toString())
+}
+
+export async function writeDownloadsJSON(updatedDownloadsJSON: {assetName:string, downloadedVersion:string}[]) {
+  const FD = await fsPromises.open(path.join(getDownloadFolder(), 'downloads.json'), 'w+')
+  await FD.write(JSON.stringify(updatedDownloadsJSON))
+  await FD.close()
+}
+
 /**
  * Should be run after POST /api/v1/assets/ to create an empty folder for the asset
  */
@@ -53,6 +67,11 @@ export async function createInitialVersion({
   console.log('adding to store');
   const newEntry = { asset_id, semver: null, folderName } satisfies DownloadedEntry;
   assetsStore.set('versions', [...getStoredVersions(), newEntry]);
+
+  // add to downloaded file
+  const downloads = await getDownloadsJSON()
+  downloads.push({assetName: asset_name, downloadedVersion: '0.0'})
+  await writeDownloadsJSON(downloads)
 }
 
 export async function openFolder(asset_id: string, semver: string | null) {
@@ -108,6 +127,8 @@ export async function commitChanges(
     return;
   }
 
+  const asset_name = folderName.split("_")[0]
+
   const sourceFolder = path.join(getDownloadFolder(), folderName);
   const zipFilePath = path.join(app.getPath('temp'), `${asset_id}_${semver}.zip`);
   console.log('sourceFolder is: ', sourceFolder); // debug log
@@ -119,7 +140,7 @@ export async function commitChanges(
   const fileData = new Blob([fileContents], { type: 'application/zip' });
 
   // Uploading Zip file with multipart/form-data
-  const { response, error } = await fetchClient.POST('/api/v1/assets/{uuid}/versions', {
+  const { data, response, error } = await fetchClient.POST('/api/v1/assets/{uuid}/versions', {
     params: { path: { uuid: asset_id } },
     body: {
       file: fileData as unknown as string,
@@ -149,6 +170,11 @@ export async function commitChanges(
 
   // Clean up the zip file
   await fsPromises.rm(zipFilePath);
+
+  const downloads = await getDownloadsJSON()
+  const newDownloads = downloads.filter((asset) => asset.assetName !== asset_name) // remove prev entry
+  newDownloads.push({assetName: asset_name, downloadedVersion: data.semver!})
+  await writeDownloadsJSON(newDownloads)
 
   return assetsStore.get('versions', []);
 }
@@ -189,6 +215,8 @@ export async function downloadVersion({ asset_id, semver }: { asset_id: string; 
   // previously had semver in here but probably not necessary
   // const folderName = `${asset_name}_${semver}_${asset_id.substring(0, 8)}/`;
   const folderName = `${asset_name}_${asset_id.substring(0, 8)}/`;
+  // remove old copy of folder 
+  await fsPromises.rm(path.join(getDownloadFolder(), folderName), {force: true, recursive : true})
   await extract(zipFilePath, { dir: path.join(getDownloadFolder(), folderName) });
 
   console.log('removing zip file...');
@@ -200,6 +228,12 @@ export async function downloadVersion({ asset_id, semver }: { asset_id: string; 
     { asset_id, semver, folderName } satisfies DownloadedEntry,
   ]);
 
+  // add to downloads JSON
+  const downloads = await getDownloadsJSON()
+  const newDownloads = downloads.filter((asset) => asset.assetName !== asset_name) // remove prev entry
+  newDownloads.push({assetName: asset_name, downloadedVersion: semver})
+  await writeDownloadsJSON(newDownloads)
+
   console.log('we made it! check', getDownloadFolder());
 }
 
@@ -209,9 +243,11 @@ export async function downloadVersion({ asset_id, semver }: { asset_id: string; 
 export async function removeVersion({
   asset_id,
   semver,
+  assetName
 }: {
   asset_id: string;
   semver: string | null;
+  assetName: string;
 }) {
   const versions = getStoredVersions();
 
@@ -225,4 +261,10 @@ export async function removeVersion({
   // remove from store
   const newVersions = versions.filter((v) => v.asset_id !== asset_id || v.semver !== semver);
   assetsStore.set('versions', newVersions);
+
+  // remove from downloads JSON
+  const downloads = await getDownloadsJSON()
+  console.log(`remove ${assetName}`)
+  const newDownloads = downloads.filter((asset) => asset.assetName !== assetName)
+  await writeDownloadsJSON(newDownloads)
 }

@@ -34,7 +34,7 @@ type GriddleIpcSchema = {
     response: { ok: boolean };
   };
   'assets:remove-version': {
-    request: { asset_id: string; semver: string | null };
+    request: { asset_id: string; semver: string | null; assetName: string };
     response: { ok: boolean };
   };
   'assets:commit-changes': {
