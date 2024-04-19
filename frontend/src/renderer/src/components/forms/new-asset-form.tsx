@@ -45,10 +45,10 @@ export default function NewAssetForm({ afterSubmit }: { afterSubmit?: SubmitHand
       return;
     }
 
+
     // First, fetch existing assets
     const existingAssetsResponse = await fetchClient.GET('/api/v1/assets/');
     if (existingAssetsResponse.error) {
-      // Handle error
       console.error('Error fetching existing assets:', existingAssetsResponse.error);
       return;
     }
@@ -62,7 +62,14 @@ export default function NewAssetForm({ afterSubmit }: { afterSubmit?: SubmitHand
       setErrorMessage('An asset with the same name already exists.');
       console.log('An asset with the same name already exists.');
       return;
-      // Handle the case where the asset already exists, e.g., notify the user or perform some other action
+    }
+
+    const result = /^[a-z][A-Za-z0-9]*$/.test(data.assetName);
+
+    if (!result) {
+      setErrorMessage('Asset name must be in camelCase and have no special characters.');
+      console.log('Asset name does not follow naming convention.');
+      return;
     }
 
     // Calling fetchClient.POST()
