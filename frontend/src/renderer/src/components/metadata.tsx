@@ -19,7 +19,7 @@ export default function Metadata() {
   const { asset, versions, latestVersion } = useSelectedAsset();
   const { downloadedVersions, syncAsset, unsyncAsset, isValidating } = useDownloads();
   const refetchSearch = useAssetsSearchRefetch()
-  
+
   // versions for showing asset versions
   const allVersions = versions ? versions.map((v) => v.semver) : [];
   const latest = latestVersion !== undefined? latestVersion : '0.0'
@@ -100,6 +100,13 @@ export default function Metadata() {
 
     refetchSearch()
   };
+
+  const onSelectVersionClick = async (item) => {
+    if (!asset) return;
+
+    setSelectedVersion(item)
+    syncAsset({ uuid: asset.id, selectedVersion: item });
+  }
 
   const onOpenFolderClick = async () => {
     if (!asset) return;
@@ -248,7 +255,7 @@ export default function Metadata() {
                 className="btn btn-outline btn-primary flex w-full flex-row items-center gap-2"
                 disabled={isValidating}
                 onClick={() => {
-                  syncAsset({ uuid: asset.id });
+                  syncAsset({ uuid: asset.id, selectedVersion: null });
                 }}
               >
                 <MdSync />
@@ -258,7 +265,7 @@ export default function Metadata() {
             {/* Update Asset Button */}
             {isDownloaded && (
               <>          
-                <VersionSelector selectedVersion={selectedVersion} setSelectedVersion={setSelectedVersion} allVersions={allVersions}/>
+                <VersionSelector selectedVersion={selectedVersion} setSelectedVersion={onSelectVersionClick} allVersions={allVersions}/>
                 <button
                   className="btn btn-ghost btn-sm flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
                   onClick={onOpenFolderClick}

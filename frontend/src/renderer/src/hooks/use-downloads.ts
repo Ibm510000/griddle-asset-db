@@ -17,7 +17,7 @@ export default function useDownloads() {
     mutate,
   } = useSWR('ipc:assets:list-downloaded', fetcher);
 
-  function syncAsset({ uuid }: { uuid: string }) {
+  function syncAsset({ uuid, selectedVersion }: { uuid: string, selectedVersion: string | null}) {
     return mutate(async () => {
       let asset_name: string;
       let latestVersion: Version | undefined;
@@ -42,7 +42,7 @@ export default function useDownloads() {
         // fetch latest version otherwise
         await window.api.ipc('assets:download-version', {
           asset_id: uuid,
-          semver: latestVersion.semver,
+          semver: selectedVersion || latestVersion.semver,
         });
       }
 
