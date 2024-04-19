@@ -17,7 +17,7 @@ const thomasImage =
 
 export default function Metadata() {
   const { asset, versions, latestVersion } = useSelectedAsset();
-  const { downloadedVersions, syncAsset, unsyncAsset, isValidating } = useDownloads();
+  const { downloadedVersions, downloads, syncAsset, unsyncAsset, isValidating } = useDownloads();
   const refetchSearch = useAssetsSearchRefetch()
 
   // versions for showing asset versions
@@ -38,7 +38,12 @@ export default function Metadata() {
 
   useEffect(() => {
     if (!asset) setEditMode(false);
-    setSelectedVersion(latest) // binds latest to selectedVersion the first time it is rendered, but not continuously updated
+    var downloaded_version = latest
+    if (downloads) {
+      var found_v = downloads.find((a) => asset?.asset_name === a.assetName)?.downloadedVersion
+      downloaded_version = found_v ? found_v : latest
+    }
+    setSelectedVersion(downloaded_version) // binds selectedVersion to the version that is currently synced
   }, [asset, setEditMode]);
 
   const { control, handleSubmit } = useForm<UpdateMetadataData>({

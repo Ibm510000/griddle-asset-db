@@ -3,6 +3,7 @@ import {
   commitChanges,
   createInitialVersion,
   downloadVersion,
+  getDownloadsJSON,
   getStoredVersions,
   openFolder,
   removeVersion,
@@ -13,6 +14,9 @@ const messageHandlers: MessageHandlers = {
   'assets:list-downloaded': async () => {
     // console.log('getting downloaded:', getStoredVersions());
     return { ok: true, versions: getStoredVersions() };
+  },
+  'assets:downloaded-json': async () => {
+    return { ok: true, downloads: await getDownloadsJSON() };
   },
   'assets:download-asset': async (_, { asset_id }) => {
     // TODO

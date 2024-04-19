@@ -21,6 +21,10 @@ type GriddleIpcSchema = {
     request: null;
     response: { versions: DownloadedEntry[] };
   };
+  'assets:downloaded-json': {
+    request: null;
+    response: { downloads: { assetName: string; downloadedVersion: string; }[] };
+  };
   'assets:download-asset': {
     request: { asset_id: string };
     response: { ok: boolean };

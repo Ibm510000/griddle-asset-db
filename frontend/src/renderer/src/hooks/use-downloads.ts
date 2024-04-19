@@ -8,6 +8,10 @@ const fetcher = () => {
   return window.api.ipc('assets:list-downloaded', null).then((response) => response.versions);
 };
 
+const fetcher2 = () => {
+  return window.api.ipc('assets:downloaded-json', null).then((response) => response.downloads);
+};
+
 export default function useDownloads() {
   const {
     data: downloadedVersions,
@@ -16,6 +20,10 @@ export default function useDownloads() {
     isValidating,
     mutate,
   } = useSWR('ipc:assets:list-downloaded', fetcher);
+
+  const {
+    data: downloads,
+  } = useSWR('ipc:assets:downloaded-json', fetcher2)
 
   function syncAsset({ uuid, selectedVersion }: { uuid: string, selectedVersion: string | null}) {
     return mutate(async () => {
@@ -97,6 +105,7 @@ export default function useDownloads() {
     error,
     isLoading,
     isValidating,
+    downloads,
     syncAsset,
     unsyncAsset,
     commitChanges,
