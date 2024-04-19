@@ -128,7 +128,7 @@ def read_asset_info(db: Session, asset_id: str):
         .outerjoin(Version, Version.asset_id == Asset.id)
         .filter(Asset.id == asset_id)
         .order_by(Version.date.desc())
-        .limit(3)
+        .limit(10)
     )
     results = db.execute(query).mappings().all()
 
