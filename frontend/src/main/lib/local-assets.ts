@@ -1,21 +1,18 @@
-import Store from 'electron-store';
-import { existsSync } from 'node:fs';
+import archiver from 'archiver';
+import { app, shell } from 'electron';
+import extract from 'extract-zip';
 import { createWriteStream } from 'fs';
+import { existsSync } from 'node:fs';
 import fsPromises from 'node:fs/promises';
 import path from 'node:path';
-import extract from 'extract-zip';
 
-import { app, shell } from 'electron';
-import fetchClient from './fetch-client';
 import { DownloadedEntry } from '../../types/ipc';
-import archiver from 'archiver';
-
-const assetsStore = new Store<{ versions: DownloadedEntry[]; downloadFolder: string }>({
-  defaults: { versions: [], downloadFolder: path.join(app.getPath('documents'), 'Griddle') },
-});
+import fetchClient from './fetch-client';
+import store from './store';
+import { getAuthToken } from './authentication';
 
 export function getDownloadFolder() {
-  const downloadPath = assetsStore.get('downloadFolder') as string;
+  const downloadPath = store.get('downloadFolder') as string;
 
   // Ensure the download folder exists
   if (!existsSync(downloadPath)) {
@@ -26,11 +23,11 @@ export function getDownloadFolder() {
 }
 
 export function setDownloadFolder(downloadFolder: string) {
-  assetsStore.set('downloadFolder', downloadFolder);
+  store.set('downloadFolder', downloadFolder);
 }
 
 export function getStoredVersions() {
-  return assetsStore.get('versions', []);
+  return store.get('versions', []);
 }
 
 /**
@@ -52,7 +49,7 @@ export async function createInitialVersion({
 
   console.log('adding to store');
   const newEntry = { asset_id, semver: null, folderName } satisfies DownloadedEntry;
-  assetsStore.set('versions', [...getStoredVersions(), newEntry]);
+  store.set('versions', [...getStoredVersions(), newEntry]);
 }
 
 export async function openFolder(asset_id: string, semver: string | null) {
@@ -126,6 +123,7 @@ export async function commitChanges(
       message: message,
       is_major: is_major,
     },
+    headers: { Authorization: `Bearer ${getAuthToken()}` },
     bodySerializer(body) {
       const formData = new FormData();
       formData.append('file', body.file as unknown as Blob, `${asset_id}_${semver}.zip`);
@@ -145,12 +143,12 @@ export async function commitChanges(
   const newVersion = { asset_id, semver, folderName };
   const versions = getStoredVersions();
   versions.push(newVersion);
-  assetsStore.set('versions', versions);
+  store.set('versions', versions);
 
   // Clean up the zip file
   await fsPromises.rm(zipFilePath);
 
-  return assetsStore.get('versions', []);
+  return store.get('versions', []);
 }
 
 export async function downloadVersion({ asset_id, semver }: { asset_id: string; semver: string }) {
@@ -173,6 +171,7 @@ export async function downloadVersion({ asset_id, semver }: { asset_id: string; 
     error,
   } = await fetchClient.GET('/api/v1/assets/{uuid}/versions/{semver}/file', {
     params: { path: { uuid: asset_id, semver } },
+    headers: { Authorization: `Bearer ${getAuthToken()}` },
     parseAs: 'blob',
   });
   if (error || response.status !== 200) {
@@ -195,7 +194,7 @@ export async function downloadVersion({ asset_id, semver }: { asset_id: string; 
   await fsPromises.rm(zipFilePath);
 
   console.log('marking as done!');
-  assetsStore.set('versions', [
+  store.set('versions', [
     ...getStoredVersions(),
     { asset_id, semver, folderName } satisfies DownloadedEntry,
   ]);
@@ -224,5 +223,5 @@ export async function removeVersion({
 
   // remove from store
   const newVersions = versions.filter((v) => v.asset_id !== asset_id || v.semver !== semver);
-  assetsStore.set('versions', newVersions);
+  store.set('versions', newVersions);
 }

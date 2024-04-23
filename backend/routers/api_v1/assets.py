@@ -1,6 +1,4 @@
-from email.policy import default
 from typing import Annotated, Literal, Sequence
-from uuid import UUID
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -10,12 +8,11 @@ from fastapi import (
     HTTPException,
     UploadFile,
 )
-from fastapi.background import P
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-from datetime import datetime
 
-from util.crud import (
+from database.models import User
+from util.crud.assets import (
     AssetInfo,
     create_asset,
     create_version,
@@ -29,6 +26,7 @@ from util.crud import (
 from database.connection import get_db
 from schemas.models import Asset, AssetCreate, Version, VersionCreate
 from util.files import save_upload_file_temp
+from util.auth import get_current_user, oauth2_scheme
 
 router = APIRouter(
     prefix="/assets",
@@ -45,11 +43,11 @@ router = APIRouter(
 Allows searching by arbitrary strings, sorting by date or name, adding keyword filters, and adding offset for pagination.""",
 )
 def get_assets(
+    db: Annotated[Session, Depends(get_db)],
     search: str | None = None,
     keywords: str | None = None,
     sort: Literal["date_asc", "name_asc", "date_dsc", "name_dsc"] = "date_dsc",
     offset: int = 0,
-    db: Session = Depends(get_db),
 ) -> Sequence[Asset]:
     # TODO: add fuzzy search somehow
     return read_assets(
@@ -62,8 +60,12 @@ def get_assets(
     summary="Create a new asset, not including initial version",
     description="Creating a new asset in the database. Does not include initial version -- followed up with POST to `/assets/{uuid}` to upload an initial version.",
 )
-async def new_asset(asset: AssetCreate, db: Session = Depends(get_db)) -> Asset:
-    return create_asset(db, asset, "benfranklin")
+async def new_asset(
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+    asset: AssetCreate,
+) -> Asset:
+    return create_asset(db, asset, user.pennkey)
 
 
 # TODO: add relatedAssets maybe
@@ -72,7 +74,7 @@ async def new_asset(asset: AssetCreate, db: Session = Depends(get_db)) -> Asset:
     summary="Get info about a specific asset",
     description="Based on `uuid`, fetches information on a specific asset.",
 )
-def get_asset_info(uuid: str, db: Session = Depends(get_db)) -> AssetInfo:
+def get_asset_info(uuid: str, db: Annotated[Session, Depends(get_db)]) -> AssetInfo:
     result = read_asset_info(db, uuid)
     if result is None:
         raise HTTPException(status_code=404, detail="Asset not found")
@@ -81,9 +83,10 @@ def get_asset_info(uuid: str, db: Session = Depends(get_db)) -> AssetInfo:
 
 @router.put("/{uuid}", summary="Update asset metadata")
 async def put_asset(
+    db: Annotated[Session, Depends(get_db)],
+    token: Annotated[str, Depends(oauth2_scheme)],
     uuid: str,
     asset: AssetCreate,
-    db: Session = Depends(get_db),
 ):
     result = update_asset(db, uuid, asset)
     if result is None:
@@ -93,21 +96,22 @@ async def put_asset(
 
 @router.get("/{uuid}/versions", summary="Get a list of versions for a given asset")
 def get_asset_versions(
+    db: Annotated[Session, Depends(get_db)],
     uuid: str,
     sort: Literal["asc", "desc"] = "desc",
     offset: int = 0,
-    db: Session = Depends(get_db),
 ) -> Sequence[Version]:
     return read_asset_versions(db, uuid, sort, offset)
 
 
 @router.post("/{uuid}/versions", summary="Upload a new version for a given asset")
 def new_asset_version(
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
     uuid: str,
     file: Annotated[UploadFile, File()],
     message: Annotated[str, Form()],
     is_major: Annotated[bool, Form()] = False,
-    db: Session = Depends(get_db),
 ):
     # TODO: reenable this sometime
     # if file.content_type != "application/zip":
@@ -124,7 +128,7 @@ def new_asset_version(
         db,
         file_path,
         uuid,
-        "benfranklin",
+        user.pennkey,
         VersionCreate(message=message, is_major=is_major),
     )
 
@@ -139,10 +143,11 @@ def new_asset_version(
     },
 )
 def download_version_file(
+    db: Annotated[Session, Depends(get_db)],
+    token: Annotated[str, Depends(oauth2_scheme)],
     background_tasks: BackgroundTasks,
     uuid: str,
     semver: str,
-    db: Session = Depends(get_db),
 ) -> FileResponse:
     (file_path, cleanup) = read_version_file(db, uuid, semver)
     background_tasks.add_task(cleanup)

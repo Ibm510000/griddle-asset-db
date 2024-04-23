@@ -45,6 +45,18 @@ type GriddleIpcSchema = {
     request: { asset_id: string; semver: string | null };
     response: { ok: boolean };
   };
+  'auth:get-auth-token': {
+    request: null;
+    response: { authToken: string | null };
+  };
+  'auth:login': {
+    request: { pennkey: string; password: string };
+    response: { ok: true } | { ok: false; error: string };
+  };
+  'auth:logout': {
+    request: null;
+    response: { ok: boolean };
+  };
 };
 
 export type GriddleIpcKey = keyof GriddleIpcSchema;

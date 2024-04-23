@@ -4,6 +4,7 @@ import { MdCheck, MdDelete } from 'react-icons/md';
 
 import { useAssetsSearchRefetch } from '@renderer/hooks/use-assets-search';
 import useDownloads from '@renderer/hooks/use-downloads';
+import { getAuthToken } from '@renderer/lib/auth';
 import fetchClient from '@renderer/lib/fetch-client';
 import { encodeThumbnailImage } from '@renderer/lib/image-util';
 import { Asset } from '@renderer/types';
@@ -53,6 +54,7 @@ export default function NewAssetForm({ afterSubmit }: { afterSubmit?: SubmitHand
         keywords: data.keywords.map(({ keyword }) => keyword).join(','),
         image_uri,
       },
+      headers: { Authorization: `Bearer ${await getAuthToken()}` },
     });
 
     if (error) throw error;

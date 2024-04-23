@@ -37,6 +37,33 @@ export interface paths {
     /** Download Version File */
     get: operations['download_version_file_api_v1_assets__uuid__versions__semver__file_get'];
   };
+  '/api/v1/users/': {
+    /**
+     * Get a list of users
+     * @description Fetches a list of users from the database. Optionally, add a search parameter to filter results.
+     */
+    get: operations['get_users_api_v1_users__get'];
+    /** Create a new user in the database */
+    post: operations['new_user_api_v1_users__post'];
+  };
+  '/api/v1/users/token': {
+    /** Login with PennKey and password */
+    post: operations['login_for_access_token_api_v1_users_token_post'];
+  };
+  '/api/v1/users/me': {
+    /**
+     * Get info about the current user
+     * @description Based on the provided token, fetches information on the current user.
+     */
+    get: operations['read_users_me_api_v1_users_me_get'];
+  };
+  '/api/v1/users/{pennkey}': {
+    /**
+     * Get info about a specific user
+     * @description Based on `pennkey`, fetches information on a specific user.
+     */
+    get: operations['get_user_info_api_v1_users__pennkey__get'];
+  };
 }
 
 export type webhooks = Record<string, never>;
@@ -74,6 +101,24 @@ export interface components {
       /** Versions */
       versions: components['schemas']['Version'][];
     };
+    /** Body_login_for_access_token_api_v1_users_token_post */
+    Body_login_for_access_token_api_v1_users_token_post: {
+      /** Grant Type */
+      grant_type?: string | null;
+      /** Username */
+      username: string;
+      /** Password */
+      password: string;
+      /**
+       * Scope
+       * @default
+       */
+      scope?: string;
+      /** Client Id */
+      client_id?: string | null;
+      /** Client Secret */
+      client_secret?: string | null;
+    };
     /** Body_new_asset_version_api_v1_assets__uuid__versions_post */
     Body_new_asset_version_api_v1_assets__uuid__versions_post: {
       /**
@@ -93,6 +138,43 @@ export interface components {
     HTTPValidationError: {
       /** Detail */
       detail?: components['schemas']['ValidationError'][];
+    };
+    /** Token */
+    Token: {
+      /** Access Token */
+      access_token: string;
+      /** Token Type */
+      token_type: string;
+    };
+    /** User */
+    User: {
+      /** Pennkey */
+      pennkey: string;
+      /** First Name */
+      first_name: string;
+      /** Last Name */
+      last_name: string;
+      /**
+       * School
+       * @enum {string}
+       */
+      school: 'sas' | 'seas' | 'wharton';
+    };
+    /** UserCreate */
+    UserCreate: {
+      /** Pennkey */
+      pennkey: string;
+      /** First Name */
+      first_name: string;
+      /** Last Name */
+      last_name: string;
+      /**
+       * School
+       * @enum {string}
+       */
+      school: 'sas' | 'seas' | 'wharton';
+      /** Password */
+      password: string;
     };
     /** ValidationError */
     ValidationError: {
@@ -333,6 +415,135 @@ export interface operations {
         content: {
           'application/json': unknown;
           'application/zip': unknown;
+        };
+      };
+      /** @description Not found */
+      404: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  /**
+   * Get a list of users
+   * @description Fetches a list of users from the database. Optionally, add a search parameter to filter results.
+   */
+  get_users_api_v1_users__get: {
+    parameters: {
+      query?: {
+        query?: string | null;
+        offset?: number;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          'application/json': components['schemas']['User'][];
+        };
+      };
+      /** @description Not found */
+      404: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  /** Create a new user in the database */
+  new_user_api_v1_users__post: {
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UserCreate'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          'application/json': components['schemas']['User'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  /** Login with PennKey and password */
+  login_for_access_token_api_v1_users_token_post: {
+    requestBody: {
+      content: {
+        'application/x-www-form-urlencoded': components['schemas']['Body_login_for_access_token_api_v1_users_token_post'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          'application/json': components['schemas']['Token'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  /**
+   * Get info about the current user
+   * @description Based on the provided token, fetches information on the current user.
+   */
+  read_users_me_api_v1_users_me_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          'application/json': components['schemas']['User'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        content: never;
+      };
+    };
+  };
+  /**
+   * Get info about a specific user
+   * @description Based on `pennkey`, fetches information on a specific user.
+   */
+  get_user_info_api_v1_users__pennkey__get: {
+    parameters: {
+      path: {
+        pennkey: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          'application/json': components['schemas']['User'];
         };
       };
       /** @description Not found */
