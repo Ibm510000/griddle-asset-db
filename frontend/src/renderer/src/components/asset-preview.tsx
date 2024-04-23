@@ -53,7 +53,7 @@ export default function AssetPreview({ uuid }: AssetPreviewProps) {
       return (
         <div className='flex'>
           <FileTree files={files} onLastClicked={handleSelectedFile} />
-          <MyThree selectedFile={selectedFile} />
+          <MyThree selectedFile={selectedFile} materialFile="../assets/gold.mtlx" />
         </div>
         
       );
