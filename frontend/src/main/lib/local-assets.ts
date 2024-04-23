@@ -10,7 +10,6 @@ import fetchClient from './fetch-client';
 import { DownloadedEntry } from '../../types/ipc';
 import archiver from 'archiver';
 
-
 const assetsStore = new Store<{ versions: DownloadedEntry[]; downloadFolder: string }>({
   defaults: { versions: [], downloadFolder: path.join(app.getPath('documents'), 'Griddle') },
 });
@@ -76,6 +75,7 @@ export async function readContent(asset_id: string, semver: string | null) {
     const fileData = files.map(file => {
       return {
         name: file,
+        path: folderPath,
         content: readFileSync(path.join(folderPath, file), 'utf-8'), // adjust the encoding as needed
       };
     });

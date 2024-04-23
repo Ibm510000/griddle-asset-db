@@ -1,16 +1,10 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable prefer-const */
 import { useState } from 'react';
-type FileDetails = {
-    name: string;
-    content: string;
-  };
-
-interface FileTreeProps {
-    files: FileDetails[];
- }
+import { FileDetails } from 'src/types/ipc';
 
 interface FileNode {
-    file: FileDetails;
+    details: FileDetails;
     children: FileNode[];
     top: boolean;
 }
@@ -21,16 +15,16 @@ const Node = ({
   openDropdowns
 }: {
   file: FileNode,
-  toggleDropdown: (fileName: string) => void,
+  toggleDropdown: (file: FileDetails) => void,
   openDropdowns: Set<string>
 }) => {
 
   return (
     <li>
-    <button onClick={() => toggleDropdown(file.file.name)}>
-      {file.file.name}
+    <button onClick={() => toggleDropdown(file.details)}>
+      {file.details.name}
     </button>
-    {openDropdowns.has(file.file.name) && file.children.length > 0 && (
+    {openDropdowns.has(file.details.name) && file.children.length > 0 && (
       <ul>
         {file.children.map((file, index) => (
           <Node key={index} file={file} toggleDropdown={toggleDropdown} openDropdowns={openDropdowns}/>
@@ -41,37 +35,39 @@ const Node = ({
   );
 };
 
-export default function FileTree({files}: FileTreeProps) {
+export default function FileTree({files, onLastClicked}) {
   const [openDropdowns, setOpenDropdowns] = useState<Set<string>>(new Set());
+
     const extractMentions = (content: string, fileNames: string[]): string[] => {
         const regex = new RegExp(`\\b(${fileNames.join('|')})\\b`, 'g');
         const matches = content.match(regex);
         return matches ? Array.from(new Set(matches)) : [];
     };
 
-    const toggleDropdown = (fileName: string) => {
+    const toggleDropdown = (file: FileDetails) => {
       const newOpenDropdowns = new Set(openDropdowns);
-      if (newOpenDropdowns.has(fileName)) {
-        newOpenDropdowns.delete(fileName);
+      if (newOpenDropdowns.has(file.name)) {
+        newOpenDropdowns.delete(file.name);
       } else {
-        newOpenDropdowns.add(fileName);
+        newOpenDropdowns.add(file.name);
       }
       setOpenDropdowns(newOpenDropdowns);
+      onLastClicked(file.content);
     };
 
     const buildFileTree = (fileArray: FileDetails[]): FileNode[] => {
         const temp = fileArray.map(item => ({...item}));
         const map: { [key: string]: FileNode } = {};
         fileArray.forEach(file => {
-            map[file.name] = {file, children:[], top: true};
+            map[file.name] = {details: file, children:[], top: true};
         });
 
         const tree: FileNode[] = [];
 
         for (let file in map) { // for each file
-            const mentions = extractMentions(map[file].file.content, temp.map(f => f.name)); // see if it mentions the names of other files in this file
+            const mentions = extractMentions(map[file].details.content, temp.map(f => f.name)); // see if it mentions the names of other files in this file
             mentions.forEach(mention => { // for each mention of another file
-                if (map[mention] && !map[file].children.includes(map[mention]) && mention !== map[file].file.name) {
+                if (map[mention] && !map[file].children.includes(map[mention]) && mention !== map[file].details.name) {
                     map[file].children.push(map[mention]); // add the other file as a mention
                     map[mention].top = false; // the mentioned file is not a top level file
                 }

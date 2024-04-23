@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import FileTree from './layout/file-tree';
+import MyThree from '../three.js';
+import { FileDetails } from 'src/types/ipc';
 
 interface AssetPreviewProps {
     uuid: string; // asset uuid
@@ -9,11 +11,11 @@ export default function AssetPreview({ uuid }: AssetPreviewProps) {
     const [files, setFiles] = useState<FileDetails[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [selectedFile, setSelectedFile] = useState('');
 
-    type FileDetails = {
-        name: string;
-        content: string;
-      };
+    const handleSelectedFile = (fileName) => {
+      setSelectedFile(fileName);
+    };
 
     useEffect(() => {
         const fetchFiles = async () => {
@@ -49,6 +51,10 @@ export default function AssetPreview({ uuid }: AssetPreviewProps) {
       }
     
       return (
-        <FileTree files={files}/>
+        <div className='flex'>
+          <FileTree files={files} onLastClicked={handleSelectedFile} />
+          <MyThree selectedFile={selectedFile} />
+        </div>
+        
       );
 }

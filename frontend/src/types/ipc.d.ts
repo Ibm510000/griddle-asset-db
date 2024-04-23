@@ -18,6 +18,7 @@ type DownloadedEntry = {
 
 type FileDetails = {
   name: string;
+  path: string;
   content: string;
 };
 
