@@ -18,14 +18,29 @@ export interface paths {
      */
     post: operations['new_asset_api_v1_assets__post'];
   };
+  '/api/v1/assets/names': {
+    /**
+     * Get a list of asset names
+     * @description Used for fetching a list of the names of assets stored in the database.
+     */
+    get: operations['get_assets_names_api_v1_assets_names_get'];
+  };
   '/api/v1/assets/{uuid}': {
     /**
      * Get info about a specific asset
      * @description Based on `uuid`, fetches information on a specific asset.
      */
     get: operations['get_asset_info_api_v1_assets__uuid__get'];
-    /** Update asset metadata */
+    /**
+     * Update asset metadata
+     * @description Based on `uuid`, updates information for a specific asset.
+     */
     put: operations['put_asset_api_v1_assets__uuid__put'];
+    /**
+     * Delete asset metadata
+     * @description Based on `uuid`, deletes a specific asset.
+     */
+    delete: operations['delete_asset_api_v1_assets__uuid__delete'];
   };
   '/api/v1/assets/{uuid}/versions': {
     /** Get a list of versions for a given asset */
@@ -281,6 +296,24 @@ export interface operations {
     };
   };
   /**
+   * Get a list of asset names
+   * @description Used for fetching a list of the names of assets stored in the database.
+   */
+  get_assets_names_api_v1_assets_names_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          'application/json': string[];
+        };
+      };
+      /** @description Not found */
+      404: {
+        content: never;
+      };
+    };
+  };
+  /**
    * Get info about a specific asset
    * @description Based on `uuid`, fetches information on a specific asset.
    */
@@ -309,7 +342,10 @@ export interface operations {
       };
     };
   };
-  /** Update asset metadata */
+  /**
+   * Update asset metadata
+   * @description Based on `uuid`, updates information for a specific asset.
+   */
   put_asset_api_v1_assets__uuid__put: {
     parameters: {
       path: {
@@ -319,6 +355,35 @@ export interface operations {
     requestBody: {
       content: {
         'application/json': components['schemas']['AssetCreate'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          'application/json': unknown;
+        };
+      };
+      /** @description Not found */
+      404: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  /**
+   * Delete asset metadata
+   * @description Based on `uuid`, deletes a specific asset.
+   */
+  delete_asset_api_v1_assets__uuid__delete: {
+    parameters: {
+      path: {
+        uuid: string;
       };
     };
     responses: {

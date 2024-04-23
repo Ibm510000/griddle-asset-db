@@ -19,9 +19,11 @@ from util.crud.assets import (
     read_asset_exists,
     read_asset_versions,
     read_assets,
+    read_assets_names,
     read_asset_info,
     read_version_file,
     update_asset,
+    remove_asset,
 )
 from database.connection import get_db
 from schemas.models import Asset, AssetCreate, Version, VersionCreate
@@ -55,6 +57,17 @@ def get_assets(
     )
 
 
+@router.get(
+    "/names",
+    summary="Get a list of asset names",
+    description="Used for fetching a list of the names of assets stored in the database.",
+)
+def get_assets_names(
+    db: Session = Depends(get_db),
+) -> Sequence[str]:
+    return read_assets_names(db)
+
+
 @router.post(
     "/",
     summary="Create a new asset, not including initial version",
@@ -81,7 +94,11 @@ def get_asset_info(uuid: str, db: Annotated[Session, Depends(get_db)]) -> AssetI
     return result
 
 
-@router.put("/{uuid}", summary="Update asset metadata")
+@router.put(
+    "/{uuid}",
+    summary="Update asset metadata",
+    description="Based on `uuid`, updates information for a specific asset.",
+)
 async def put_asset(
     db: Annotated[Session, Depends(get_db)],
     token: Annotated[str, Depends(oauth2_scheme)],
@@ -92,6 +109,21 @@ async def put_asset(
     if result is None:
         raise HTTPException(status_code=404, detail="Asset not found")
     return result
+
+
+@router.delete(
+    "/{uuid}",
+    summary="Delete asset metadata ONLY FOR DEV PURPOSES",
+    description="Based on `uuid`, deletes a specific asset.",
+)
+async def delete_asset(
+    uuid: str,
+    db: Session = Depends(get_db),
+):
+    result = remove_asset(db, uuid)
+    if result is False:
+        raise HTTPException(status_code=404, detail="Asset not found")
+    return
 
 
 @router.get("/{uuid}/versions", summary="Get a list of versions for a given asset")
