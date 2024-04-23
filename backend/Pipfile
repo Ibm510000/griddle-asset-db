@@ -14,6 +14,7 @@ sqlalchemy = "*"
 boto3 = "*"
 psycopg2 = "*"
 sqladmin = "*"
+python-jose = {extras = ["cryptography"], version = "*"}
 
 [dev-packages]
 boto3-stubs = {extras = ["essential"], version = "*"}

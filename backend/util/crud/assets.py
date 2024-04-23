@@ -155,6 +155,13 @@ def read_asset_versions(
 
 
 def read_version_file(db: Session, asset_id: str, semver: str):
+    """
+    Temporarily fetches the specified version file from S3.
+
+    Returns:
+        tuple: A tuple containing the file path and a cleanup function.
+    """
+
     version = (
         db.execute(
             select(Version)

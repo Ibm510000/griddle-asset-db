@@ -1,4 +1,5 @@
 import type { MessageHandlers } from '../types/ipc';
+import { getAuthToken, login, logout } from './lib/authentication';
 import {
   commitChanges,
   createInitialVersion,
@@ -47,6 +48,25 @@ const messageHandlers: MessageHandlers = {
     console.log(`Reading Content for ${asset_id}@${semver}`);
     const files = await readContent(asset_id, semver);
     return { ok: true, files };
+  },
+  'auth:get-auth-token': async () => {
+    return { authToken: getAuthToken() };
+  },
+  'auth:login': async (_, { pennkey, password }) => {
+    try {
+      await login(pennkey, password);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' };
+    }
+  },
+  'auth:logout': async () => {
+    try {
+      await logout();
+      return { ok: true };
+    } catch (e) {
+      return { ok: false };
+    }
   },
 };
 

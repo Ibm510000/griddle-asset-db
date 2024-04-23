@@ -2,15 +2,15 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
-// import { useSelectedAsset } from '@renderer/hooks/use-asset-select';
-// import useDownloads from '@renderer/hooks/use-downloads';
+import useAuth from '@renderer/hooks/use-auth';
+import fetchClient from '@renderer/lib/fetch-client';
 import Label from '../input/label';
 import TextInput from '../input/text-input';
 
 export interface NewUserFormData {
-  firstName: string; // first name
-  lastName: string; // last name
-  pennkey: string; // username
+  first_name: string; // first name
+  last_name: string; // last name
+  pennkey: string; // pennkey
   school: 'sas' | 'seas' | 'wharton';
   password: string; // password
 }
@@ -19,10 +19,8 @@ interface NewUserFormProps {
   afterSubmit?: SubmitHandler<NewUserFormData>;
 }
 
-// POST to /api/v1/assets/{uuid}/versions - Upload new version for a given asset
 export default function NewUserForm({ afterSubmit }: NewUserFormProps) {
-  // const { commitChanges } = useDownloads();
-  // const { mutate: mutateSelectedAsset } = useSelectedAsset();
+  const { login } = useAuth();
 
   const {
     register,
@@ -31,8 +29,8 @@ export default function NewUserForm({ afterSubmit }: NewUserFormProps) {
     control,
   } = useForm<NewUserFormData>({
     defaultValues: {
-      firstName: '',
-      lastName: '',
+      first_name: '',
+      last_name: '',
       pennkey: '',
       school: 'seas',
       password: '',
@@ -42,26 +40,24 @@ export default function NewUserForm({ afterSubmit }: NewUserFormProps) {
   // --------------------------------------------
 
   const submitHandler = async (data: NewUserFormData) => {
-    // const { versions: downloadedVersions } = await window.api.ipc('assets:list-downloaded', null);
-    // const downloaded = downloadedVersions.find(({ asset_id }) => asset_id === uuid);
+    // Create the user
+    try {
+      await fetchClient.POST('/api/v1/users/', {
+        body: data,
+      });
+    } catch (e) {
+      // TODO: Show error message
+      alert(e);
+      return;
+    }
 
-    // if (!downloaded) {
-    //   console.error('No downloaded version found for asset', uuid);
-    //   return;
-    // }
+    // Log the user in
+    const result = await login(data.pennkey, data.password);
+    if (!result.ok) {
+      alert(result.error);
+      return;
+    }
 
-    // // Calling fetchClient.POST()
-    // await commitChanges({
-    //   asset_id: uuid,
-    //   semver: downloaded.semver,
-    //   message: data.message,
-    //   is_major: data.is_major,
-    // });
-
-    // // refetch selected asset in case it's the one we updated
-    // mutateSelectedAsset();
-
-    // Combine assetFiles from state with form data
     if (afterSubmit) afterSubmit(data); // Call the onSubmit function provided by props
   };
 
@@ -75,13 +71,13 @@ export default function NewUserForm({ afterSubmit }: NewUserFormProps) {
           <TextInput
             label="First Name"
             placeholder="Ben"
-            {...register('firstName', { required: true })}
+            {...register('first_name', { required: true })}
           />
 
           <TextInput
             label="Last Name"
             placeholder="Franklin"
-            {...register('lastName', { required: true })}
+            {...register('last_name', { required: true })}
           />
         </div>
 

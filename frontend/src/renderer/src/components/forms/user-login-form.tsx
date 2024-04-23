@@ -1,12 +1,11 @@
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
-// import { useSelectedAsset } from '@renderer/hooks/use-asset-select';
-// import useDownloads from '@renderer/hooks/use-downloads';
+import useAuth from '@renderer/hooks/use-auth';
 import TextInput from '../input/text-input';
 
 export interface UserLoginFormData {
-  username: string; // username
+  pennkey: string; // pennkey
   password: string; // password
 }
 
@@ -14,10 +13,8 @@ interface UserLoginFormProps {
   afterSubmit?: SubmitHandler<UserLoginFormData>;
 }
 
-// POST to /api/v1/assets/{uuid}/versions - Upload new version for a given asset
 export default function UserLoginForm({ afterSubmit }: UserLoginFormProps) {
-  // const { commitChanges } = useDownloads();
-  // const { mutate: mutateSelectedAsset } = useSelectedAsset();
+  const { login } = useAuth();
 
   const {
     register,
@@ -25,7 +22,7 @@ export default function UserLoginForm({ afterSubmit }: UserLoginFormProps) {
     formState: { isSubmitting },
   } = useForm<UserLoginFormData>({
     defaultValues: {
-      username: '',
+      pennkey: '',
       password: '',
     },
   });
@@ -33,26 +30,14 @@ export default function UserLoginForm({ afterSubmit }: UserLoginFormProps) {
   // --------------------------------------------
 
   const submitHandler = async (data: UserLoginFormData) => {
-    // const { versions: downloadedVersions } = await window.api.ipc('assets:list-downloaded', null);
-    // const downloaded = downloadedVersions.find(({ asset_id }) => asset_id === uuid);
+    const result = await login(data.pennkey, data.password);
 
-    // if (!downloaded) {
-    //   console.error('No downloaded version found for asset', uuid);
-    //   return;
-    // }
+    if (!result.ok) {
+      // TODO: Show error message
+      alert(result.error);
+      return;
+    }
 
-    // // Calling fetchClient.POST()
-    // await commitChanges({
-    //   asset_id: uuid,
-    //   semver: downloaded.semver,
-    //   message: data.message,
-    //   is_major: data.is_major,
-    // });
-
-    // // refetch selected asset in case it's the one we updated
-    // mutateSelectedAsset();
-
-    // Combine assetFiles from state with form data
     if (afterSubmit) afterSubmit(data); // Call the onSubmit function provided by props
   };
 
@@ -62,7 +47,7 @@ export default function UserLoginForm({ afterSubmit }: UserLoginFormProps) {
         <TextInput
           label="Pennkey"
           placeholder="benfranklin"
-          {...register('username', { required: true })}
+          {...register('pennkey', { required: true })}
         />
 
         <TextInput
