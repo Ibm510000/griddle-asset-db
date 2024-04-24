@@ -18,7 +18,7 @@ const thomasImage =
 
 export default function Metadata() {
   const { asset, versions, latestVersion } = useSelectedAsset();
-  const { downloadedVersions, downloads, syncAsset, unsyncAsset, isValidating } = useDownloads();
+  const { downloadedVersions, downloads, syncAsset, unsyncAsset, ifFilesChanged, isValidating } = useDownloads();
   const refetchSearch = useAssetsSearchRefetch();
 
   // versions for showing asset versions
@@ -111,10 +111,8 @@ export default function Metadata() {
   const onSelectVersionClick = async (item) => {
     if (!asset) return;
 
-    // TODO: add function!
-    const changed = true
-    if (changed) {
-      if (!confirm("You have uncommitted changed. You will lose your work if you switch versions. \nPress OK to continue without saving.")) {
+    if (ifFilesChanged(asset.asset_name)) {
+      if (!confirm(`${asset.asset_name} has uncommitted changed. You will lose your work if you switch versions. \nPress OK to continue without saving.`)) {
         return;
       }
     }

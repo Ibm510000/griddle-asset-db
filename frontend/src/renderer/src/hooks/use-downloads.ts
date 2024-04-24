@@ -78,6 +78,10 @@ export default function useDownloads() {
     });
   }
 
+  function ifFilesChanged(assetNane:string): boolean {
+    return true;
+  }
+
   const commitChanges = useCallback(
     async (opts: {
       asset_id: string;
@@ -109,6 +113,7 @@ export default function useDownloads() {
     syncAsset,
     unsyncAsset,
     commitChanges,
+    ifFilesChanged,
     openFolder,
     mutate,
   };
