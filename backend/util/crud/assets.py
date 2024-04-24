@@ -3,7 +3,7 @@ from typing import Sequence, Literal
 from uuid import uuid4
 from pydantic import BaseModel
 import semver
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
 import csv
 
@@ -78,6 +78,15 @@ def read_assets(
     return db.execute(query).scalars().all()
 
 
+def read_assets_names(db: Session):
+    # Select all assets in db
+    query = select(Asset.asset_name)
+    # Execute the query and fetch all results
+    asset_names = db.execute(query).scalars().all()
+
+    return asset_names
+
+
 def create_asset(db: Session, asset: AssetCreate, author_pennkey: str):
     db_asset = Asset(
         asset_name=asset.asset_name,
@@ -105,6 +114,11 @@ def update_asset(db: Session, asset_id: str, asset: AssetCreate):
     db.commit()
     db.refresh(db_asset)
     return db_asset
+
+
+def remove_asset(db: Session, asset_id: str):
+    db.execute(delete(Asset).where(Asset.id == asset_id))
+    db.commit()
 
 
 def read_asset_exists(db: Session, asset_id: str):
@@ -156,6 +170,13 @@ def read_asset_versions(
 
 
 def read_version_file(db: Session, asset_id: str, semver: str):
+    """
+    Temporarily fetches the specified version file from S3.
+
+    Returns:
+        tuple: A tuple containing the file path and a cleanup function.
+    """
+
     version = (
         db.execute(
             select(Version)

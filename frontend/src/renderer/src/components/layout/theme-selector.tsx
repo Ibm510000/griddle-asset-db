@@ -22,9 +22,8 @@ const ThemeSelector = ({ selectedTheme, setSelectedTheme }) => {
 
   return (
     <div className="dropdown dropdown-end">
-      <label tabIndex={0} className="btn m-1 flex items-center justify-center gap-2">
+      <label tabIndex={0} className="btn btn-ghost m-1 flex items-center justify-center gap-2">
         <MdPalette className="h-6 w-6" /> {/* Using the icon here */}
-        Themes
       </label>
       <ul tabIndex={0} className="menu dropdown-content w-52 rounded-box bg-base-100 p-2 shadow">
         {themes.map((item, index) => (

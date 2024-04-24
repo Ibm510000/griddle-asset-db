@@ -4,6 +4,7 @@ import { create } from 'zustand';
 
 import fetchClient from '@renderer/lib/fetch-client';
 import { AssetCreate } from '../types';
+import { getAuthToken } from '@renderer/lib/auth';
 
 interface AssetSelectState {
   selectedId: string | null;
@@ -41,6 +42,7 @@ export function useSelectedAsset() {
       await fetchClient.PUT('/api/v1/assets/{uuid}', {
         params: { path: { uuid: selectedId } },
         body: asset,
+        headers: { Authorization: `Bearer ${await getAuthToken()}` },
       });
       return mutate();
     },

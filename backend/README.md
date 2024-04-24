@@ -1,17 +1,30 @@
-# Asset Database Backend
+# Griddle &mdash; Backend
+
+An OpenAPI-enabled HTTP API written in python using FastAPI.
 
 ## Development
 
-First, make sure to spin up our development `docker-compose.yml`. In the project's root directory, run:
+See the [wiki](../../wiki) for a full development guide.
 
-```bash
-$ docker-compose up -d
+Install dependencies and enter virtualenv:
+
+```sh
+pipenv install
+pipenv shell
 ```
 
-We use FastAPI for our backend. To get started, `cd` into this `backend` folder, create a virtualenv with `pipenv install`, and enter a shell using `pipenv shell`.
-
-To start a dev server, run:
+To start a dev server:
 
 ```bash
-$ uvicorn main:app --reload
+uvicorn main:app --reload
 ```
+
+To autogenerate a migration:
+
+```sh
+alembic revision --autogenerate
+```
+
+## Contributing
+
+See the [wiki](../../../wiki) for tips on contributing.

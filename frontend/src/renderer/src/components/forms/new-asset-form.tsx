@@ -1,35 +1,54 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMemo } from 'react';
 import { Controller, SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
+import { BiImageAdd } from 'react-icons/bi';
+import { MdCheck, MdDelete } from 'react-icons/md';
+import z from 'zod';
 
+import { useAssetNames } from '@renderer/hooks/use-all-assets';
 import { useAssetsSearchRefetch } from '@renderer/hooks/use-assets-search';
 import useDownloads from '@renderer/hooks/use-downloads';
+import { getAuthToken } from '@renderer/lib/auth';
 import fetchClient from '@renderer/lib/fetch-client';
 import { encodeThumbnailImage } from '@renderer/lib/image-util';
 import { Asset } from '@renderer/types';
-import TextInput from '../input/text-input';
+import ErrorMessage from '../input/error-message';
 import KeywordsInput from '../input/keywords-input';
 import Label from '../input/label';
-import { BiImageAdd } from 'react-icons/bi';
-import { MdCheck, MdDelete } from 'react-icons/md';
-import { useState } from 'react';
-
-export interface NewAssetFormData {
-  assetName: string;
-  keywords: { keyword: string }[];
-  thumbnailFile: File;
-}
+import TextInput from '../input/text-input';
 
 export default function NewAssetForm({ afterSubmit }: { afterSubmit?: SubmitHandler<Asset> }) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const refetchSearch = useAssetsSearchRefetch();
   const { mutate: mutateDownloads } = useDownloads();
 
+  const { assetNames } = useAssetNames();
+
+  const newAssetSchema = useMemo(
+    () =>
+      z.object({
+        assetName: z
+          .string()
+          .regex(/^[a-z][A-Za-z0-9]*$/, 'Must be in camelCase with no special characters')
+          .refine((assetName) => assetNames?.indexOf(assetName) === -1, {
+            message: 'Asset with this name already exists',
+          }),
+        keywords: z.array(z.object({ keyword: z.string() })),
+        thumbnailFile: z.instanceof(File, { message: 'Thumbnail file is required' }),
+      }),
+    [assetNames],
+  );
+
+  type NewAssetFormData = z.infer<typeof newAssetSchema>;
+
   const {
     register,
     control,
     handleSubmit,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = useForm<NewAssetFormData>({
     defaultValues: { assetName: '', keywords: [], thumbnailFile: undefined },
+    resolver: zodResolver(newAssetSchema),
   });
   // field array for keywords input
   const keywordsFieldArray = useFieldArray({ control, name: 'keywords' });
@@ -83,6 +102,7 @@ export default function NewAssetForm({ afterSubmit }: { afterSubmit?: SubmitHand
         keywords: data.keywords.map(({ keyword }) => keyword).join(','),
         image_uri,
       },
+      headers: { Authorization: `Bearer ${await getAuthToken()}` },
     });
 
     if (error) throw error;
@@ -113,6 +133,7 @@ export default function NewAssetForm({ afterSubmit }: { afterSubmit?: SubmitHand
           label="Asset Name"
           placeholder="myAwesomeAsset"
           {...register('assetName', { required: true })}
+          errorMessage={errors.assetName?.message}
         />
         <KeywordsInput fieldArrayReturn={keywordsFieldArray} />
 
@@ -170,6 +191,7 @@ export default function NewAssetForm({ afterSubmit }: { afterSubmit?: SubmitHand
                   )}
                 </div>
               </div>
+              <ErrorMessage errorMessage={errors.thumbnailFile?.message} />
             </label>
           )}
         />
