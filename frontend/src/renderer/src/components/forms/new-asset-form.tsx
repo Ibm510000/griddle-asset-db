@@ -18,7 +18,6 @@ import Label from '../input/label';
 import TextInput from '../input/text-input';
 
 export default function NewAssetForm({ afterSubmit }: { afterSubmit?: SubmitHandler<Asset> }) {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const refetchSearch = useAssetsSearchRefetch();
   const { mutate: mutateDownloads } = useDownloads();
 
@@ -59,35 +58,7 @@ export default function NewAssetForm({ afterSubmit }: { afterSubmit?: SubmitHand
       image_uri = await encodeThumbnailImage(await data.thumbnailFile!.arrayBuffer());
     } catch (err) {
       // TODO: toast
-      setErrorMessage('Error encoding thumbnail image');
       console.error('Error encoding thumbnail image:', err);
-      return;
-    }
-
-
-    // First, fetch existing assets
-    const existingAssetsResponse = await fetchClient.GET('/api/v1/assets/');
-    if (existingAssetsResponse.error) {
-      console.error('Error fetching existing assets:', existingAssetsResponse.error);
-      return;
-    }
-
-    const existingAssets = existingAssetsResponse.data;
-
-    // Check if an asset with the same name already exists
-    const assetExists = existingAssets.some(asset => asset.asset_name === data.assetName);
-
-    if (assetExists) {
-      setErrorMessage('An asset with the same name already exists.');
-      console.log('An asset with the same name already exists.');
-      return;
-    }
-
-    const result = /^[a-z][A-Za-z0-9]*$/.test(data.assetName);
-
-    if (!result) {
-      setErrorMessage('Asset name must be in camelCase and have no special characters.');
-      console.log('Asset name does not follow naming convention.');
       return;
     }
 
@@ -125,9 +96,6 @@ export default function NewAssetForm({ afterSubmit }: { afterSubmit?: SubmitHand
 
   return (
     <form onSubmit={handleSubmit(submitHandler)}>
-      {errorMessage && (
-        <div className="text-red-600 text-sm mb-4">{errorMessage}</div>
-      )}
       <div className="flex flex-col gap-4">
         <TextInput
           label="Asset Name"
