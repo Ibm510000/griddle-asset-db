@@ -5,6 +5,7 @@ import { createWriteStream } from 'fs';
 import { existsSync } from 'node:fs';
 import fsPromises from 'node:fs/promises';
 import path from 'node:path';
+// import { hashElement } from '../../../../backend/node_modules/folder-hash';
 
 import { DownloadedEntry } from '../../types/ipc';
 import fetchClient from './fetch-client';
@@ -46,6 +47,17 @@ export async function writeDownloadsJSON(updatedDownloadsJSON: {assetName:string
   await FD.write(JSON.stringify(updatedDownloadsJSON))
   await FD.close()
 }
+
+// export async function getFolderHash(filePath: string){
+//   hashElement(filePath)
+//   .then(hash => {
+//     console.log("hash: " + hash.toString());
+//     return hash['hash'].toString()
+//   })
+//   .catch(error => {
+//     console.error('hashing failed:', error);
+//   });
+// }
 
 export async function ifFilesChanged(assetName: string): Promise<boolean> {
   // TODO: hash file function here 
