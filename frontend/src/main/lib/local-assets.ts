@@ -49,6 +49,7 @@ export async function writeDownloadsJSON(updatedDownloadsJSON: {assetName:string
 
 export function ifFilesChanged(assetName: string): boolean {
   // TODO: hash file function here 
+  // compare current with saved hash 
   return true;
 }
 
@@ -76,6 +77,8 @@ export async function createInitialVersion({
   const downloads = await getDownloadsJSON()
   downloads.push({assetName: asset_name, downloadedVersion: '0.0'})
   await writeDownloadsJSON(downloads)
+
+  // TODO: add hash 
   
   store.set('versions', [...getStoredVersions(), newEntry]);
 }
@@ -183,6 +186,8 @@ export async function commitChanges(
   newDownloads.push({assetName: asset_name, downloadedVersion: data.semver!})
   await writeDownloadsJSON(newDownloads)
 
+  // TODO: update saved hash 
+
   return store.get('versions', []);
 }
 
@@ -241,6 +246,8 @@ export async function downloadVersion({ asset_id, semver }: { asset_id: string; 
   const newDownloads = downloads.filter((asset) => asset.assetName !== asset_name) // remove prev entry
   newDownloads.push({assetName: asset_name, downloadedVersion: semver})
   await writeDownloadsJSON(newDownloads)
+
+  // TODO: updated saved hash 
 
   console.log('we made it! check', getDownloadFolder());
 }
