@@ -45,6 +45,10 @@ type GriddleIpcSchema = {
     request: { asset_id: string; semver: string | null; message; is_major };
     response: { ok: boolean };
   };
+  'assets:files-changed': {
+    request: { assetName: string};
+    response: { ok: boolean, ifChanged: boolean };
+  };
   'assets:open-folder': {
     request: { asset_id: string; semver: string | null };
     response: { ok: boolean };

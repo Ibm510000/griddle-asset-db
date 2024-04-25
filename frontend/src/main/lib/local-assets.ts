@@ -47,6 +47,11 @@ export async function writeDownloadsJSON(updatedDownloadsJSON: {assetName:string
   await FD.close()
 }
 
+export function ifFilesChanged(assetName: string): boolean {
+  // TODO: hash file function here 
+  return true;
+}
+
 /**
  * Should be run after POST /api/v1/assets/ to create an empty folder for the asset
  */

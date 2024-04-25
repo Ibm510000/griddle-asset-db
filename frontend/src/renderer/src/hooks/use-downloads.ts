@@ -12,6 +12,10 @@ const fetcher2 = () => {
   return window.api.ipc('assets:downloaded-json', null).then((response) => response.downloads);
 };
 
+const fetcher3 = (assetName) => {
+  return window.api.ipc('assets:files-changed', assetName).then((response) => response.ifChanged);
+};
+
 export default function useDownloads() {
   const {
     data: downloadedVersions,
@@ -78,8 +82,15 @@ export default function useDownloads() {
     });
   }
 
-  function ifFilesChanged(assetNane:string): boolean {
-    return true;
+  function ifFilesChanged(assetName: string): boolean {
+    return (async () => {
+      
+      await window.api.ipc('assets:files-changed', {
+        assetName: assetName,
+      });
+
+      return fetcher3(assetName);
+    })
   }
 
   const commitChanges = useCallback(

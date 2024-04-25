@@ -6,6 +6,7 @@ import {
   downloadVersion,
   getDownloadsJSON,
   getStoredVersions,
+  ifFilesChanged,
   openFolder,
   removeVersion,
 } from './lib/local-assets';
@@ -41,6 +42,9 @@ const messageHandlers: MessageHandlers = {
     console.log(`Committing changes for ${asset_id}@${semver}`);
     await commitChanges(asset_id, semver, message, is_major);
     return { ok: true };
+  },
+  'assets:files-changed': async (_, { assetName }) => {
+    return { ok: true, ifChanged: ifFilesChanged(assetName) };
   },
   'assets:open-folder': async (_, { asset_id, semver }) => {
     console.log(`Opening folder for ${asset_id}@${semver}`);
