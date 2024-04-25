@@ -83,14 +83,15 @@ export default function useDownloads() {
   }
 
   function ifFilesChanged(assetName: string): boolean {
-    return (async () => {
+    // return (async () => {
       
-      await window.api.ipc('assets:files-changed', {
-        assetName: assetName,
-      });
+    //   await window.api.ipc('assets:files-changed', {
+    //     assetName: assetName,
+    //   });
 
-      return fetcher3(assetName);
-    })
+    //   return fetcher3(assetName);
+    // })
+    return true;
   }
 
   const commitChanges = useCallback(
