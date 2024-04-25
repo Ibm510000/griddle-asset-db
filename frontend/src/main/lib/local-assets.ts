@@ -47,10 +47,15 @@ export async function writeDownloadsJSON(updatedDownloadsJSON: {assetName:string
   await FD.close()
 }
 
-export function ifFilesChanged(assetName: string): boolean {
+export async function ifFilesChanged(assetName: string): Promise<boolean> {
   // TODO: hash file function here 
   // compare current with saved hash 
-  return true;
+  const downloads = await getDownloadsJSON()
+  const saved_asset = downloads.find((a) => assetName === a.assetName)
+  // what is the current hash
+  const current_hash = ""
+  //return (current_hash !== saved_asset.folderHash)
+  return true
 }
 
 /**

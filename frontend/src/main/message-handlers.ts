@@ -44,7 +44,7 @@ const messageHandlers: MessageHandlers = {
     return { ok: true };
   },
   'assets:files-changed': async (_, { assetName }) => {
-    return { ok: true, ifChanged: ifFilesChanged(assetName) };
+    return { ok: true, ifChanged: await ifFilesChanged(assetName) };
   },
   'assets:open-folder': async (_, { asset_id, semver }) => {
     console.log(`Opening folder for ${asset_id}@${semver}`);
