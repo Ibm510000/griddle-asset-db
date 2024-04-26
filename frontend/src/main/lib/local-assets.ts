@@ -6,7 +6,7 @@ import { existsSync } from 'node:fs';
 import fsPromises from 'node:fs/promises';
 import path from 'node:path';
 
-import { DownloadedEntry } from '../../types/ipc';
+import { DownloadedEntry, Version } from '../../types/ipc';
 import fetchClient from './fetch-client';
 import store from './store';
 import { getAuthToken } from './authentication';
@@ -141,7 +141,7 @@ export async function commitChanges(
   const fileData = new Blob([fileContents], { type: 'application/zip' });
 
   // Uploading Zip file with multipart/form-data
-  const { data, response, error } = await fetchClient.POST('/api/v1/assets/{uuid}/versions', {
+  const result = await fetchClient.POST('/api/v1/assets/{uuid}/versions', {
     params: { path: { uuid: asset_id } },
     body: {
       file: fileData as unknown as string,
@@ -158,6 +158,8 @@ export async function commitChanges(
     },
   });
 
+  const {error, response} = result
+
   if (error || !response.ok) {
     console.log('error uploading zip file', error, response.status);
     throw new Error(`Failed to upload zip file for asset ${asset_id}`);
@@ -172,6 +174,8 @@ export async function commitChanges(
 
   // Clean up the zip file
   await fsPromises.rm(zipFilePath);
+
+  const data = result.data as Version
 
   const downloads = await getDownloadsJSON()
   const newDownloads = downloads.filter((asset) => asset.assetName !== asset_name) // remove prev entry

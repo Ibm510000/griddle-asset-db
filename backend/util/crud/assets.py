@@ -9,6 +9,7 @@ import csv
 
 from schemas.models import (
     AssetCreate,
+    AssetUpdate,
     VersionCreate,
     Asset as MAsset,
     Version as MVersion,
@@ -100,7 +101,7 @@ def create_asset(db: Session, asset: AssetCreate, author_pennkey: str):
     return db_asset
 
 
-def update_asset(db: Session, asset_id: str, asset: AssetCreate):
+def update_asset(db: Session, asset_id: str, asset: AssetUpdate):
     db_asset = (
         db.execute(select(Asset).filter(Asset.id == asset_id).limit(1))
         .scalars()
@@ -108,7 +109,6 @@ def update_asset(db: Session, asset_id: str, asset: AssetCreate):
     )
     if db_asset is None:
         return None
-    db_asset.asset_name = asset.asset_name
     db_asset.keywords = asset.keywords
     db_asset.image_uri = asset.image_uri
     db.commit()
