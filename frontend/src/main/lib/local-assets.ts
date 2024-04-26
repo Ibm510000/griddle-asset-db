@@ -31,7 +31,7 @@ export function getStoredVersions() {
   return store.get('versions', []);
 }
 
-export async function getDownloadsJSON(): Promise<{assetName:string, downloadedVersion:string}[]> {
+export async function getDownloadsJSON(): Promise<{assetName:string, downloadedVersion:string, folderHash:string}[]> {
   try {
     const FD = await fsPromises.open(path.join(getDownloadFolder(), 'downloads.json'), 'r')
     const data = await FD.readFile()
@@ -42,7 +42,7 @@ export async function getDownloadsJSON(): Promise<{assetName:string, downloadedV
   }
 }
 
-export async function writeDownloadsJSON(updatedDownloadsJSON: {assetName:string, downloadedVersion:string}[]) {
+export async function writeDownloadsJSON(updatedDownloadsJSON: {assetName:string, downloadedVersion:string, folderHash:string}[]) {
   const FD = await fsPromises.open(path.join(getDownloadFolder(), 'downloads.json'), 'w+')
   await FD.write(JSON.stringify(updatedDownloadsJSON))
   await FD.close()
@@ -63,6 +63,7 @@ export async function ifFilesChanged(assetName: string, asset_id: string): Promi
   // compare current with saved hash 
   const downloads = await getDownloadsJSON()
   const saved_asset = downloads.find((a) => assetName === a.assetName)
+  const saved_hash = saved_asset ? saved_asset.folderHash : ""
 
   // what is the current hash
   const folderName = `${assetName}_${asset_id.substring(0, 8)}/`;
@@ -70,7 +71,7 @@ export async function ifFilesChanged(assetName: string, asset_id: string): Promi
   const current_hash = await getFolderHash(folderPath)
   
   console.log('log: ' + current_hash);
-  return (current_hash !== saved_asset.folderHash)
+  return (current_hash !== saved_hash)
 }
 
 /**
@@ -93,12 +94,13 @@ export async function createInitialVersion({
   console.log('adding to store');
   const newEntry = { asset_id, semver: null, folderName } satisfies DownloadedEntry;
 
+  // hash new folder
+  const current_hash = await getFolderHash(folderPath)
+
   // add to downloaded file
   const downloads = await getDownloadsJSON()
-  downloads.push({assetName: asset_name, downloadedVersion: '0.0'})
+  downloads.push({assetName: asset_name, downloadedVersion: '0.0', folderHash: current_hash})
   await writeDownloadsJSON(downloads)
-
-  // TODO: add hash 
   
   store.set('versions', [...getStoredVersions(), newEntry]);
 }
@@ -201,12 +203,13 @@ export async function commitChanges(
   // Clean up the zip file
   await fsPromises.rm(zipFilePath);
 
+  // Update saved hash
+  const new_hash = await getFolderHash(sourceFolder)
+
   const downloads = await getDownloadsJSON()
   const newDownloads = downloads.filter((asset) => asset.assetName !== asset_name) // remove prev entry
-  newDownloads.push({assetName: asset_name, downloadedVersion: data.semver!})
+  newDownloads.push({assetName: asset_name, downloadedVersion: data.semver!, folderHash: new_hash})
   await writeDownloadsJSON(newDownloads)
-
-  // TODO: update saved hash 
 
   return store.get('versions', []);
 }
@@ -249,8 +252,9 @@ export async function downloadVersion({ asset_id, semver }: { asset_id: string; 
   // const folderName = `${asset_name}_${semver}_${asset_id.substring(0, 8)}/`;
   const folderName = `${asset_name}_${asset_id.substring(0, 8)}/`;
   // remove old copy of folder 
-  await fsPromises.rm(path.join(getDownloadFolder(), folderName), {force: true, recursive : true})
-  await extract(zipFilePath, { dir: path.join(getDownloadFolder(), folderName) });
+  const folderPath = path.join(getDownloadFolder(), folderName)
+  await fsPromises.rm(folderPath, {force: true, recursive : true})
+  await extract(zipFilePath, { dir: folderPath });
 
   console.log('removing zip file...');
   await fsPromises.rm(zipFilePath);
@@ -261,13 +265,13 @@ export async function downloadVersion({ asset_id, semver }: { asset_id: string; 
     { asset_id, semver, folderName } satisfies DownloadedEntry,
   ]);
 
+  const current_hash = await getFolderHash(folderPath)
+
   // add to downloads JSON
   const downloads = await getDownloadsJSON()
   const newDownloads = downloads.filter((asset) => asset.assetName !== asset_name) // remove prev entry
-  newDownloads.push({assetName: asset_name, downloadedVersion: semver})
+  newDownloads.push({assetName: asset_name, downloadedVersion: semver, folderHash: current_hash})
   await writeDownloadsJSON(newDownloads)
-
-  // TODO: updated saved hash 
 
   console.log('we made it! check', getDownloadFolder());
 }
