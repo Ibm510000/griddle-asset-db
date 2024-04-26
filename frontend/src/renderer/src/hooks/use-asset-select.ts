@@ -53,7 +53,6 @@ export function useSelectedAsset() {
   return {
     asset: data?.asset,
     versions: data?.versions,
-    latestVersion: data?.versions[0]?.semver,
     error,
     isLoading,
     isValidating,

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { CiEdit } from 'react-icons/ci';
 import { MdFolderOpen, MdSync, MdSyncDisabled } from 'react-icons/md';
@@ -17,14 +17,12 @@ const thomasImage =
   'data:image/jpg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAgICAgJCAkKCgkNDgwODRMREBARExwUFhQWFBwrGx8bGx8bKyYuJSMlLiZENS8vNUROQj5CTl9VVV93cXecnNEBCAgICAkICQoKCQ0ODA4NExEQEBETHBQWFBYUHCsbHxsbHxsrJi4lIyUuJkQ1Ly81RE5CPkJOX1VVX3dxd5yc0f/CABEIAEAAQAMBIgACEQEDEQH/xAAzAAACAgMBAQAAAAAAAAAAAAAFBgMHAAIEAQgBAQEBAQEBAAAAAAAAAAAAAAQCAwAFBv/aAAwDAQACEAMQAAAA79vZPovDxeK0SVLOzIwgrPo7EGxWgHy7ydS5VV4VkR3NEXJYr4LRV2vUCxKokE5kA5IZlqJOAGYb37jBjtjhuAgkRJWNOlzqyO9UF3W0i3kd/8QALRAAAgEEAQIGAQIHAAAAAAAAAQIDAAQFERIhMQYTIjJBUXEUYQcQFTNSgpH/2gAIAQEAAT8AArVIm6zviezwz+QImmuSobj2Vd/Zo+OM40vLnCF/wEdYrxylxNHDeQopYhQ60nGRA69VPY1xoClFZfJJicbNeFOTDSov27dBUjXN/dSSuzSSyOWZj8k1HgmKcnk0aeB4ZiOxU9DXgPIXVzNd28rMyJGrAk0VoLSivF9t5/hu9IXbRcJR/q1Wz/ooYmCIWZQx3snr+Knu5Fto5RGmm+91+livcZessamZEMgYb36evY1/DhHN3k5APQIY13RFBaC1lbd7jD5KFF5NJayKo+yRUotEjjTiGYAAD8UtzaPavEqB2HZdGsQ9lMkiIApKMhH5FeD7FrOLIKigW5aMRtrqxUaJorWameO3g4MRuXr/AM3WHmeSOUtIX0RrZ3qpJJv6peMZGKqPSAx9GtV4jxrC8EyllWdQ4ZfhgPUKghjZiiwyLIR7/MfVYOzMV1EHLMS42zdzTH4B0KS5R5nh5tzU+0xkaHb3Hv2o579cQzNGioS2idKv5JrF5OIiKOJRuZtmQPv2ntxq4dEv5dMFZogT10SfsfvU+blyMEtsVCmNiVIGwwU63+1RTZVLgKFBXferRpIp0Lt12DUeUma5aG6R44ydCRdAdOvX81ZPJHdp590BHIwLEnso31B30q6waMLlrXhHEYiIGbcrlz6jz+h8ChaPDIzRXNpbweYP7pdiARrq5C9Pmrl8fawsrZITOSEZopBIencqvEAg/bGsdlXu74xKvlxFCVUsznYAGuTUXkjYEdvmlnJbke1Z3LNfXzNE7CJFCLokb49d1a+IZlQJcL5gGtOPf0+996yOemN0zJGebOnrLKInQDWvQazeau76UxMyrGje1DtSV+QaJJ7moJ5LeZJozp0OxS+J4Wj1JasH+eJBFZHOzXcXkxp5Ufz12zfz/8QAIBEAAgICAgIDAAAAAAAAAAAAAQIAEQMSITEiYTJBcv/aAAgBAgEBPwDaZ85Qar8oufMpFm4uQMLELTMLa/UP6ERqUQnyHEyrttOyOJmfVgAG4o8Dv1AxGMNZ56u7m7FgSxmyj7uByJ//xAAkEQABAgUCBwAAAAAAAAAAAAABABECAwQSISIxEBMyQUJhgf/aAAgBAwEBPwBlT095eLZRU0sjpZRy7IiFYqYafqZTpR5hQGk5UqK0w+14qVLuBcjuMnZEambY5QAAwE+OH//Z';
 
 export default function Metadata() {
-  const { asset, versions, latestVersion } = useSelectedAsset();
-  const { downloadedVersions, downloads, syncAsset, unsyncAsset, isValidating } = useDownloads();
+  const { asset, versions } = useSelectedAsset();
+  const { downloadedVersions, syncAsset, unsyncAsset, isValidating } = useDownloads();
   const refetchSearch = useAssetsSearchRefetch();
 
   // versions for showing asset versions
   const allVersions = versions ? versions.map((v) => v.semver) : [];
-  const latest = latestVersion !== undefined ? latestVersion : '0.0';
-  const [selectedVersion, setSelectedVersion] = useState(latest); // default to most recent version
 
   const isDownloaded = useMemo(() => {
     return downloadedVersions?.findIndex(({ asset_id }) => asset_id === asset?.id) !== -1;
@@ -36,16 +34,6 @@ export default function Metadata() {
 
   const [editMode, setEditMode] = useState(false);
   const [editedAsset, setEditedAsset] = useState<Asset | null>(null);
-
-  useEffect(() => {
-    if (!asset) setEditMode(false);
-    var downloaded_version = latest;
-    if (downloads) {
-      var found_v = downloads.find((a) => asset?.asset_name === a.assetName)?.downloadedVersion;
-      downloaded_version = found_v ? found_v : latest;
-    }
-    setSelectedVersion(downloaded_version); // binds selectedVersion to the version that is currently synced
-  }, [asset, setEditMode]);
 
   const { control, handleSubmit } = useForm<UpdateMetadataData>({
     defaultValues: { thumbnailFile: undefined },
@@ -108,13 +96,6 @@ export default function Metadata() {
     refetchSearch();
   };
 
-  const onSelectVersionClick = async (item) => {
-    if (!asset) return;
-
-    setSelectedVersion(item);
-    syncAsset({ uuid: asset.id, selectedVersion: item });
-  };
-
   const onOpenFolderClick = async () => {
     if (!asset) return;
 
@@ -123,7 +104,6 @@ export default function Metadata() {
 
     await window.api.ipc('assets:open-folder', {
       asset_id: asset.id,
-      semver: downloaded.semver,
     });
   };
 
@@ -262,7 +242,7 @@ export default function Metadata() {
                 className="btn btn-outline btn-primary flex w-full flex-row items-center gap-2"
                 disabled={isValidating}
                 onClick={() => {
-                  syncAsset({ uuid: asset.id, selectedVersion: null });
+                  syncAsset({ uuid: asset.id, asset_name: asset.asset_name });
                 }}
               >
                 <MdSync />
@@ -272,11 +252,6 @@ export default function Metadata() {
             {/* Update Asset Button */}
             {isDownloaded && (
               <>
-                <VersionSelector
-                  selectedVersion={selectedVersion}
-                  setSelectedVersion={onSelectVersionClick}
-                  allVersions={allVersions}
-                />
                 <button
                   className="btn btn-ghost btn-sm flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
                   onClick={onOpenFolderClick}
@@ -290,14 +265,17 @@ export default function Metadata() {
                 >
                   Commit Changes
                 </Link>
-                <button
-                  className="btn btn-ghost btn-sm mt-2 flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
-                  disabled={isValidating}
-                  onClick={() => unsyncAsset({ uuid: asset.id, assetName: asset.asset_name })}
-                >
-                  <MdSyncDisabled className="h-5 w-5" />
-                  Unsync
-                </button>
+                <div className="mt-2 grid grid-cols-2">
+                  <VersionSelector asset={asset} allVersions={allVersions} />
+                  <button
+                    className="btn btn-ghost btn-sm flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
+                    disabled={isValidating}
+                    onClick={() => unsyncAsset({ uuid: asset.id, assetName: asset.asset_name })}
+                  >
+                    <MdSyncDisabled className="h-5 w-5" />
+                    Unsync
+                  </button>
+                </div>
               </>
             )}
           </div>

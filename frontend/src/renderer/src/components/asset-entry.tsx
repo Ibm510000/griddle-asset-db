@@ -22,7 +22,7 @@ export default function AssetEntry({
 
   const onDownloadClick = async () => {
     setDownloading(true);
-    await syncAsset({ uuid: id, selectedVersion: null });
+    await syncAsset({ uuid: id, asset_name });
     setDownloading(false);
     await mutateDownloads();
   };
