@@ -5,7 +5,7 @@ import { createWriteStream } from 'fs';
 import { existsSync } from 'node:fs';
 import fsPromises from 'node:fs/promises';
 import path from 'node:path';
-import hashElement from 'folder-hash'
+import { hashElement } from 'folder-hash'
 
 import { DownloadedEntry } from '../../types/ipc';
 import fetchClient from './fetch-client';
@@ -48,8 +48,8 @@ export async function writeDownloadsJSON(updatedDownloadsJSON: {assetName:string
   await FD.close()
 }
 
-export async function getFolderHash(filePath: string){
-  hashElement(filePath)
+export async function getFolderHash(filePath: string): Promise<string>{
+  return hashElement(filePath)
   .then(hash => {
     console.log("hash: " + hash.toString());
     return hash['hash'].toString()
@@ -64,8 +64,11 @@ export async function ifFilesChanged(assetName: string): Promise<boolean> {
   // compare current with saved hash 
   const downloads = await getDownloadsJSON()
   const saved_asset = downloads.find((a) => assetName === a.assetName)
+
   // what is the current hash
-  const current_hash = ""
+  const current_hash = await getFolderHash("C:\\Users\\Kyra\\Desktop\\Classic-Granny-with-a-Twist-Blanket-placement-diagram-768x796 - Copy.jpg")
+  
+  console.log('log: ' + current_hash);
   //return (current_hash !== saved_asset.folderHash)
   return true
 }
