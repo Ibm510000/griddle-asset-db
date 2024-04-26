@@ -39,6 +39,11 @@ export default function Metadata() {
     defaultValues: { thumbnailFile: undefined },
   });
 
+  const currentVersion = useMemo(
+    () => downloadedVersions?.find(({ asset_id }) => asset_id === asset?.id),
+    [downloadedVersions, asset?.id],
+  );
+
   const handleEditClick = () => {
     if (!asset) return;
     setEditMode(true);
@@ -266,7 +271,11 @@ export default function Metadata() {
                   Commit Changes
                 </Link>
                 <div className="mt-2 grid grid-cols-2">
-                  <VersionSelector asset={asset} allVersions={allVersions} />
+                  <VersionSelector
+                    asset={asset}
+                    allVersions={allVersions}
+                    currentVersion={currentVersion}
+                  />
                   <button
                     className="btn btn-ghost btn-sm flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
                     disabled={isValidating}
@@ -295,6 +304,7 @@ export default function Metadata() {
             </div>
           </div>
           {/* Last 3 versions */}
+          {/* TODO: add later versions */}
           <ul className="mt-8">
             {versions?.map(({ date, message, semver, author_pennkey }) => (
               <li className="chat chat-start space-y-0.5" key={`${asset.id}_${semver}`}>
@@ -310,7 +320,15 @@ export default function Metadata() {
                   </time>
                 </div>
                 <div className="chat-bubble- chat-bubble">
-                  <span className="badge -ml-1 mr-1 font-mono">{semver}</span> {message}
+                  <button
+                    className={`badge -ml-1 mr-1 font-mono hover:opacity-90 active:scale-90 ${currentVersion?.semver === semver ? 'ring-2 ring-primary' : ''}`}
+                    onClick={() => {
+                      syncAsset({ uuid: asset.id, asset_name: asset.asset_name, semver });
+                    }}
+                  >
+                    {semver}
+                  </button>{' '}
+                  {message}
                 </div>
                 <hr />
               </li>

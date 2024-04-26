@@ -1,15 +1,18 @@
-import { useMemo } from 'react';
-
 import useDownloads from '@renderer/hooks/use-downloads';
 import { Asset } from '@renderer/types';
 import { MdCommit } from 'react-icons/md';
+import { DownloadedEntry } from 'src/types/ipc';
 
-const VersionSelector = ({ asset, allVersions }: { asset: Asset; allVersions: string[] }) => {
-  const { downloadedVersions, syncAsset } = useDownloads();
-  const currentVersion = useMemo(
-    () => downloadedVersions?.find(({ asset_id }) => asset_id === asset.id),
-    [downloadedVersions, asset.id],
-  );
+const VersionSelector = ({
+  asset,
+  allVersions,
+  currentVersion,
+}: {
+  asset: Asset;
+  allVersions: string[];
+  currentVersion?: DownloadedEntry;
+}) => {
+  const { syncAsset } = useDownloads();
 
   if (allVersions.length === 0) {
     return (
