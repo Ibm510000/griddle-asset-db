@@ -51,7 +51,6 @@ export async function writeDownloadsJSON(updatedDownloadsJSON: {assetName:string
 export async function getFolderHash(filePath: string): Promise<string>{
   return hashElement(filePath)
   .then(hash => {
-    console.log("hash: " + hash.toString());
     return hash['hash'].toString()
   })
   .catch(error => {
