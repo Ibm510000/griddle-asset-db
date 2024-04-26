@@ -59,18 +59,18 @@ export async function getFolderHash(filePath: string): Promise<string>{
   });
 }
 
-export async function ifFilesChanged(assetName: string): Promise<boolean> {
-  // TODO: hash file function here 
+export async function ifFilesChanged(assetName: string, asset_id: string): Promise<boolean> {
   // compare current with saved hash 
   const downloads = await getDownloadsJSON()
   const saved_asset = downloads.find((a) => assetName === a.assetName)
 
   // what is the current hash
-  const current_hash = await getFolderHash("C:\\Users\\Kyra\\Desktop\\Classic-Granny-with-a-Twist-Blanket-placement-diagram-768x796 - Copy.jpg")
+  const folderName = `${assetName}_${asset_id.substring(0, 8)}/`;
+  const folderPath = path.join(getDownloadFolder(), folderName);
+  const current_hash = await getFolderHash(folderPath)
   
   console.log('log: ' + current_hash);
-  //return (current_hash !== saved_asset.folderHash)
-  return true
+  return (current_hash !== saved_asset.folderHash)
 }
 
 /**

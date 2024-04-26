@@ -78,8 +78,8 @@ export default function useDownloads() {
     });
   }
 
-  function ifFilesChanged(assetName: string)  {
-    return window.api.ipc('assets:files-changed', {assetName}).then((response) => response.ifChanged);
+  function ifFilesChanged(assetName: string, asset_id: string)  {
+    return window.api.ipc('assets:files-changed', {assetName, asset_id}).then((response) => response.ifChanged);
   }
 
   const commitChanges = useCallback(
