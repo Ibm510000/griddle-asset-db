@@ -23,7 +23,7 @@ type GriddleIpcSchema = {
   };
   'assets:downloaded-json': {
     request: null;
-    response: { downloads: { assetName: string; downloadedVersion: string; }[] };
+    response: { downloads: { assetName: string; downloadedVersion: string }[] };
   };
   'assets:download-asset': {
     request: { asset_id: string };

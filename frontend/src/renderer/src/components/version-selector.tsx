@@ -1,11 +1,14 @@
 import PropTypes from 'prop-types';
 
-const VersionSelector = ({ selectedVersion, setSelectedVersion , allVersions}) => {
+const VersionSelector = ({ selectedVersion, setSelectedVersion, allVersions }) => {
   const versions = allVersions;
 
   return (
     <div className="dropdown dropdown-end w-full">
-      <label tabIndex={0} className="btn btn-ghost btn-sm flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal">
+      <label
+        tabIndex={0}
+        className="btn btn-ghost btn-sm flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
+      >
         Version: {selectedVersion}
       </label>
       <ul tabIndex={0} className="menu dropdown-content w-20 rounded-box bg-base-100 p-2 shadow">

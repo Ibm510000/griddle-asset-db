@@ -14,12 +14,13 @@ interface AssetSelectState {
 
 export const useAssetSelectStore = create<AssetSelectState>((set) => ({
   selectedId: null,
-  setSelected: (assetId, version) => set((state) => ({ ...state, selectedId: assetId, selectedVersion: version })),
+  setSelected: (assetId, version) =>
+    set((state) => ({ ...state, selectedId: assetId, selectedVersion: version })),
   selectedVersion: null,
 }));
 
 export function useSelectedAsset() {
-  const selectedId = useAssetSelectStore((state) => state.selectedId)
+  const selectedId = useAssetSelectStore((state) => state.selectedId);
 
   const { data, error, isLoading, isValidating, mutate } = useSWR(
     selectedId !== null ? (['/api/v1/assets/{uuid}', { selectedId }] as const) : null,

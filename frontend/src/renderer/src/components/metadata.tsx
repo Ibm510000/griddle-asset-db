@@ -23,7 +23,7 @@ export default function Metadata() {
 
   // versions for showing asset versions
   const allVersions = versions ? versions.map((v) => v.semver) : [];
-  const latest = latestVersion !== undefined? latestVersion : '0.0'
+  const latest = latestVersion !== undefined ? latestVersion : '0.0';
   const [selectedVersion, setSelectedVersion] = useState(latest); // default to most recent version
 
   const isDownloaded = useMemo(() => {
@@ -39,12 +39,12 @@ export default function Metadata() {
 
   useEffect(() => {
     if (!asset) setEditMode(false);
-    var downloaded_version = latest
+    var downloaded_version = latest;
     if (downloads) {
-      var found_v = downloads.find((a) => asset?.asset_name === a.assetName)?.downloadedVersion
-      downloaded_version = found_v ? found_v : latest
+      var found_v = downloads.find((a) => asset?.asset_name === a.assetName)?.downloadedVersion;
+      downloaded_version = found_v ? found_v : latest;
     }
-    setSelectedVersion(downloaded_version) // binds selectedVersion to the version that is currently synced
+    setSelectedVersion(downloaded_version); // binds selectedVersion to the version that is currently synced
   }, [asset, setEditMode]);
 
   const { control, handleSubmit } = useForm<UpdateMetadataData>({
@@ -111,9 +111,9 @@ export default function Metadata() {
   const onSelectVersionClick = async (item) => {
     if (!asset) return;
 
-    setSelectedVersion(item)
+    setSelectedVersion(item);
     syncAsset({ uuid: asset.id, selectedVersion: item });
-  }
+  };
 
   const onOpenFolderClick = async () => {
     if (!asset) return;
@@ -271,8 +271,12 @@ export default function Metadata() {
             )}
             {/* Update Asset Button */}
             {isDownloaded && (
-              <>          
-                <VersionSelector selectedVersion={selectedVersion} setSelectedVersion={onSelectVersionClick} allVersions={allVersions}/>
+              <>
+                <VersionSelector
+                  selectedVersion={selectedVersion}
+                  setSelectedVersion={onSelectVersionClick}
+                  allVersions={allVersions}
+                />
                 <button
                   className="btn btn-ghost btn-sm flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
                   onClick={onOpenFolderClick}

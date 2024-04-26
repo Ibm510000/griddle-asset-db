@@ -21,11 +21,9 @@ export default function useDownloads() {
     mutate,
   } = useSWR('ipc:assets:list-downloaded', fetcher);
 
-  const {
-    data: downloads,
-  } = useSWR('ipc:assets:downloaded-json', fetcher2)
+  const { data: downloads } = useSWR('ipc:assets:downloaded-json', fetcher2);
 
-  function syncAsset({ uuid, selectedVersion }: { uuid: string, selectedVersion: string | null}) {
+  function syncAsset({ uuid, selectedVersion }: { uuid: string; selectedVersion: string | null }) {
     return mutate(async () => {
       let asset_name: string;
       let latestVersion: Version | undefined;
@@ -58,7 +56,7 @@ export default function useDownloads() {
     });
   }
 
-  function unsyncAsset({ uuid, assetName }: { uuid: string, assetName: string}) {
+  function unsyncAsset({ uuid, assetName }: { uuid: string; assetName: string }) {
     return mutate(async () => {
       console.log('unsyncing asset', uuid);
 

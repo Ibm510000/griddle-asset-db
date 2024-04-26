@@ -30,21 +30,25 @@ export function getStoredVersions() {
   return store.get('versions', []);
 }
 
-export async function getDownloadsJSON(): Promise<{assetName:string, downloadedVersion:string}[]> {
+export async function getDownloadsJSON(): Promise<
+  { assetName: string; downloadedVersion: string }[]
+> {
   try {
-    const FD = await fsPromises.open(path.join(getDownloadFolder(), 'downloads.json'), 'r')
-    const data = await FD.readFile()
-    await FD.close()
-    return JSON.parse(data.toString())
+    const FD = await fsPromises.open(path.join(getDownloadFolder(), 'downloads.json'), 'r');
+    const data = await FD.readFile();
+    await FD.close();
+    return JSON.parse(data.toString());
   } catch (ENOENT) {
-    return []
+    return [];
   }
 }
 
-export async function writeDownloadsJSON(updatedDownloadsJSON: {assetName:string, downloadedVersion:string}[]) {
-  const FD = await fsPromises.open(path.join(getDownloadFolder(), 'downloads.json'), 'w+')
-  await FD.write(JSON.stringify(updatedDownloadsJSON))
-  await FD.close()
+export async function writeDownloadsJSON(
+  updatedDownloadsJSON: { assetName: string; downloadedVersion: string }[],
+) {
+  const FD = await fsPromises.open(path.join(getDownloadFolder(), 'downloads.json'), 'w+');
+  await FD.write(JSON.stringify(updatedDownloadsJSON));
+  await FD.close();
 }
 
 /**
@@ -68,10 +72,10 @@ export async function createInitialVersion({
   const newEntry = { asset_id, semver: null, folderName } satisfies DownloadedEntry;
 
   // add to downloaded file
-  const downloads = await getDownloadsJSON()
-  downloads.push({assetName: asset_name, downloadedVersion: '0.0'})
-  await writeDownloadsJSON(downloads)
-  
+  const downloads = await getDownloadsJSON();
+  downloads.push({ assetName: asset_name, downloadedVersion: '0.0' });
+  await writeDownloadsJSON(downloads);
+
   store.set('versions', [...getStoredVersions(), newEntry]);
 }
 
@@ -128,7 +132,7 @@ export async function commitChanges(
     return;
   }
 
-  const asset_name = folderName.split("_")[0]
+  const asset_name = folderName.split('_')[0];
 
   const sourceFolder = path.join(getDownloadFolder(), folderName);
   const zipFilePath = path.join(app.getPath('temp'), `${asset_id}_${semver}.zip`);
@@ -158,7 +162,7 @@ export async function commitChanges(
     },
   });
 
-  const {error, response} = result
+  const { error, response } = result;
 
   if (error || !response.ok) {
     console.log('error uploading zip file', error, response.status);
@@ -175,12 +179,12 @@ export async function commitChanges(
   // Clean up the zip file
   await fsPromises.rm(zipFilePath);
 
-  const data = result.data as Version
+  const data = result.data as Version;
 
-  const downloads = await getDownloadsJSON()
-  const newDownloads = downloads.filter((asset) => asset.assetName !== asset_name) // remove prev entry
-  newDownloads.push({assetName: asset_name, downloadedVersion: data.semver!})
-  await writeDownloadsJSON(newDownloads)
+  const downloads = await getDownloadsJSON();
+  const newDownloads = downloads.filter((asset) => asset.assetName !== asset_name); // remove prev entry
+  newDownloads.push({ assetName: asset_name, downloadedVersion: data.semver! });
+  await writeDownloadsJSON(newDownloads);
 
   return store.get('versions', []);
 }
@@ -222,8 +226,8 @@ export async function downloadVersion({ asset_id, semver }: { asset_id: string; 
   // previously had semver in here but probably not necessary
   // const folderName = `${asset_name}_${semver}_${asset_id.substring(0, 8)}/`;
   const folderName = `${asset_name}_${asset_id.substring(0, 8)}/`;
-  // remove old copy of folder 
-  await fsPromises.rm(path.join(getDownloadFolder(), folderName), {force: true, recursive : true})
+  // remove old copy of folder
+  await fsPromises.rm(path.join(getDownloadFolder(), folderName), { force: true, recursive: true });
   await extract(zipFilePath, { dir: path.join(getDownloadFolder(), folderName) });
 
   console.log('removing zip file...');
@@ -236,10 +240,10 @@ export async function downloadVersion({ asset_id, semver }: { asset_id: string; 
   ]);
 
   // add to downloads JSON
-  const downloads = await getDownloadsJSON()
-  const newDownloads = downloads.filter((asset) => asset.assetName !== asset_name) // remove prev entry
-  newDownloads.push({assetName: asset_name, downloadedVersion: semver})
-  await writeDownloadsJSON(newDownloads)
+  const downloads = await getDownloadsJSON();
+  const newDownloads = downloads.filter((asset) => asset.assetName !== asset_name); // remove prev entry
+  newDownloads.push({ assetName: asset_name, downloadedVersion: semver });
+  await writeDownloadsJSON(newDownloads);
 
   console.log('we made it! check', getDownloadFolder());
 }
@@ -250,7 +254,7 @@ export async function downloadVersion({ asset_id, semver }: { asset_id: string; 
 export async function removeVersion({
   asset_id,
   semver,
-  assetName
+  assetName,
 }: {
   asset_id: string;
   semver: string | null;
@@ -269,10 +273,10 @@ export async function removeVersion({
   const newVersions = versions.filter((v) => v.asset_id !== asset_id || v.semver !== semver);
 
   // remove from downloads JSON
-  const downloads = await getDownloadsJSON()
-  console.log(`remove ${assetName}`)
-  const newDownloads = downloads.filter((asset) => asset.assetName !== assetName)
-  await writeDownloadsJSON(newDownloads)
-  
+  const downloads = await getDownloadsJSON();
+  console.log(`remove ${assetName}`);
+  const newDownloads = downloads.filter((asset) => asset.assetName !== assetName);
+  await writeDownloadsJSON(newDownloads);
+
   store.set('versions', newVersions);
 }
