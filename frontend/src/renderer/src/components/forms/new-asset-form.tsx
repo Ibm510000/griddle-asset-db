@@ -17,6 +17,16 @@ import KeywordsInput from '../input/keywords-input';
 import Label from '../input/label';
 import TextInput from '../input/text-input';
 
+const newAssetSchemaBase = z.object({
+  assetName: z
+    .string()
+    .regex(/^[a-z][A-Za-z0-9]*$/, 'Must be in camelCase with no special characters'),
+  keywords: z.array(z.object({ keyword: z.string() })),
+  thumbnailFile: z.instanceof(File, { message: 'Thumbnail file is required' }),
+});
+
+export type NewAssetFormData = z.infer<typeof newAssetSchemaBase>;
+
 export default function NewAssetForm({ afterSubmit }: { afterSubmit?: SubmitHandler<Asset> }) {
   const refetchSearch = useAssetsSearchRefetch();
   const { mutate: mutateDownloads } = useDownloads();
@@ -25,20 +35,15 @@ export default function NewAssetForm({ afterSubmit }: { afterSubmit?: SubmitHand
 
   const newAssetSchema = useMemo(
     () =>
-      z.object({
-        assetName: z
-          .string()
-          .regex(/^[a-z][A-Za-z0-9]*$/, 'Must be in camelCase with no special characters')
-          .refine((assetName) => assetNames?.indexOf(assetName) === -1, {
+      newAssetSchemaBase.and(
+        z.object({
+          assetName: z.string().refine((assetName) => assetNames?.indexOf(assetName) === -1, {
             message: 'Asset with this name already exists',
           }),
-        keywords: z.array(z.object({ keyword: z.string() })),
-        thumbnailFile: z.instanceof(File, { message: 'Thumbnail file is required' }),
-      }),
+        }),
+      ),
     [assetNames],
   );
-
-  type NewAssetFormData = z.infer<typeof newAssetSchema>;
 
   const {
     register,
