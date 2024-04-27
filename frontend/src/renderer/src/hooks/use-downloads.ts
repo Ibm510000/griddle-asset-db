@@ -21,14 +21,21 @@ export default function useDownloads() {
     mutate,
   } = useSWR('ipc:assets:list-downloaded', fetcher);
 
-  const {
-    data: downloads,
-  } = useSWR('ipc:assets:downloaded-json', fetcher2)
-
-  function syncAsset({ uuid, selectedVersion }: { uuid: string, selectedVersion: string | null}) {
+  /**
+   * Download an asset by UUID with the specified version, or latest if not provided
+   */
+  function syncAsset({
+    uuid,
+    asset_name,
+    semver,
+  }: {
+    uuid: string;
+    asset_name: string;
+    semver?: string;
+  }) {
     return mutate(async () => {
-      let asset_name: string;
-      let latestVersion: Version | undefined;
+      // fetch latest version to download
+      let latestVersion: Version;
       {
         const { data, response, error } = await fetchClient.GET(`/api/v1/assets/{uuid}`, {
           params: { path: { uuid } },
@@ -39,18 +46,17 @@ export default function useDownloads() {
           return;
         }
 
-        latestVersion = data.versions.at(0);
-        asset_name = data.asset.asset_name;
+        latestVersion = data.versions.at(0)!;
       }
 
       if (latestVersion === undefined) {
-        // logic for if there is no initial version
+        // if there is no initial version, create empty folder
         await window.api.ipc('assets:create-initial-version', { asset_id: uuid, asset_name });
       } else {
         // fetch latest version otherwise
         await window.api.ipc('assets:download-version', {
           asset_id: uuid,
-          semver: selectedVersion || latestVersion.semver,
+          semver: semver || latestVersion.semver,
         });
       }
 
@@ -58,7 +64,7 @@ export default function useDownloads() {
     });
   }
 
-  function unsyncAsset({ uuid, assetName }: { uuid: string, assetName: string}) {
+  function unsyncAsset({ uuid, assetName }: { uuid: string; assetName: string }) {
     return mutate(async () => {
       console.log('unsyncing asset', uuid);
 
@@ -68,9 +74,9 @@ export default function useDownloads() {
         return;
       }
 
-      await window.api.ipc('assets:remove-version', {
+      // TODO: make sure we don't remove uncommitted changes
+      await window.api.ipc('assets:remove-download', {
         asset_id: uuid,
-        semver: downloaded.semver, // TODO: make this more robust
         assetName: assetName,
       });
 
@@ -97,12 +103,9 @@ export default function useDownloads() {
     [mutate],
   );
 
-  const openFolder = useCallback(
-    async ({ asset_id, semver }: { asset_id: string; semver: string }) => {
-      await window.api.ipc('assets:open-folder', { asset_id, semver });
-    },
-    [],
-  );
+  const openFolder = useCallback(async ({ asset_id }: { asset_id: string }) => {
+    await window.api.ipc('assets:open-folder', { asset_id });
+  }, []);
 
   return {
     downloadedVersions,

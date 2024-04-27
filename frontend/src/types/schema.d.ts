@@ -37,7 +37,7 @@ export interface paths {
      */
     put: operations['put_asset_api_v1_assets__uuid__put'];
     /**
-     * Delete asset metadata
+     * Delete asset metadata ONLY FOR DEV PURPOSES
      * @description Based on `uuid`, deletes a specific asset.
      */
     delete: operations['delete_asset_api_v1_assets__uuid__delete'];
@@ -377,7 +377,7 @@ export interface operations {
     };
   };
   /**
-   * Delete asset metadata
+   * Delete asset metadata ONLY FOR DEV PURPOSES
    * @description Based on `uuid`, deletes a specific asset.
    */
   delete_asset_api_v1_assets__uuid__delete: {

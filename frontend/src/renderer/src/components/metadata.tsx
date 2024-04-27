@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { CiEdit } from 'react-icons/ci';
 import { MdFolderOpen, MdSync, MdSyncDisabled } from 'react-icons/md';
@@ -23,8 +23,6 @@ export default function Metadata() {
 
   // versions for showing asset versions
   const allVersions = versions ? versions.map((v) => v.semver) : [];
-  const latest = latestVersion !== undefined? latestVersion : '0.0'
-  const [selectedVersion, setSelectedVersion] = useState(latest); // default to most recent version
 
   const isDownloaded = useMemo(() => {
     return downloadedVersions?.findIndex(({ asset_id }) => asset_id === asset?.id) !== -1;
@@ -37,19 +35,14 @@ export default function Metadata() {
   const [editMode, setEditMode] = useState(false);
   const [editedAsset, setEditedAsset] = useState<Asset | null>(null);
 
-  useEffect(() => {
-    if (!asset) setEditMode(false);
-    var downloaded_version = latest
-    if (downloads) {
-      var found_v = downloads.find((a) => asset?.asset_name === a.assetName)?.downloadedVersion
-      downloaded_version = found_v ? found_v : latest
-    }
-    setSelectedVersion(downloaded_version) // binds selectedVersion to the version that is currently synced
-  }, [asset, setEditMode]);
-
   const { control, handleSubmit } = useForm<UpdateMetadataData>({
     defaultValues: { thumbnailFile: undefined },
   });
+
+  const currentVersion = useMemo(
+    () => downloadedVersions?.find(({ asset_id }) => asset_id === asset?.id),
+    [downloadedVersions, asset?.id],
+  );
 
   const handleEditClick = () => {
     if (!asset) return;
@@ -129,7 +122,6 @@ export default function Metadata() {
 
     await window.api.ipc('assets:open-folder', {
       asset_id: asset.id,
-      semver: downloaded.semver,
     });
   };
 
@@ -268,7 +260,7 @@ export default function Metadata() {
                 className="btn btn-outline btn-primary flex w-full flex-row items-center gap-2"
                 disabled={isValidating}
                 onClick={() => {
-                  syncAsset({ uuid: asset.id, selectedVersion: null });
+                  syncAsset({ uuid: asset.id, asset_name: asset.asset_name });
                 }}
               >
                 <MdSync />
@@ -292,14 +284,21 @@ export default function Metadata() {
                 >
                   Commit Changes
                 </Link>
-                <button
-                  className="btn btn-ghost btn-sm mt-2 flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
-                  disabled={isValidating}
-                  onClick={() => unsyncAsset({ uuid: asset.id, assetName: asset.asset_name })}
-                >
-                  <MdSyncDisabled className="h-5 w-5" />
-                  Unsync
-                </button>
+                <div className="mt-2 grid grid-cols-2">
+                  <VersionSelector
+                    asset={asset}
+                    allVersions={allVersions}
+                    currentVersion={currentVersion}
+                  />
+                  <button
+                    className="btn btn-ghost btn-sm flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
+                    disabled={isValidating}
+                    onClick={() => unsyncAsset({ uuid: asset.id, assetName: asset.asset_name })}
+                  >
+                    <MdSyncDisabled className="h-5 w-5" />
+                    Unsync
+                  </button>
+                </div>
               </>
             )}
           </div>
@@ -319,6 +318,7 @@ export default function Metadata() {
             </div>
           </div>
           {/* Last 3 versions */}
+          {/* TODO: add later versions */}
           <ul className="mt-8">
             {versions?.map(({ date, message, semver, author_pennkey }) => (
               <li className="chat chat-start space-y-0.5" key={`${asset.id}_${semver}`}>
@@ -334,7 +334,15 @@ export default function Metadata() {
                   </time>
                 </div>
                 <div className="chat-bubble- chat-bubble">
-                  <span className="badge -ml-1 mr-1 font-mono">{semver}</span> {message}
+                  <button
+                    className={`badge -ml-1 mr-1 font-mono hover:opacity-90 active:scale-90 ${currentVersion?.semver === semver ? 'ring-2 ring-primary' : ''}`}
+                    onClick={() => {
+                      syncAsset({ uuid: asset.id, asset_name: asset.asset_name, semver });
+                    }}
+                  >
+                    {semver}
+                  </button>{' '}
+                  {message}
                 </div>
                 <hr />
               </li>

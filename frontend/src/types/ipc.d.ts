@@ -37,12 +37,12 @@ type GriddleIpcSchema = {
     request: { asset_id: string; semver: string };
     response: { ok: boolean };
   };
-  'assets:remove-version': {
-    request: { asset_id: string; semver: string | null; assetName: string };
+  'assets:remove-download': {
+    request: { asset_id: string; assetName: string };
     response: { ok: boolean };
   };
   'assets:commit-changes': {
-    request: { asset_id: string; semver: string | null; message; is_major };
+    request: { asset_id: string; message: string; is_major: boolean };
     response: { ok: boolean };
   };
   'assets:files-changed': {
@@ -50,7 +50,7 @@ type GriddleIpcSchema = {
     response: { ok: boolean, ifChanged: boolean };
   };
   'assets:open-folder': {
-    request: { asset_id: string; semver: string | null };
+    request: { asset_id: string };
     response: { ok: boolean };
   };
   'auth:get-auth-token': {

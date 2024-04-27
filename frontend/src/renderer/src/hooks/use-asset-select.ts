@@ -14,7 +14,8 @@ interface AssetSelectState {
 
 export const useAssetSelectStore = create<AssetSelectState>((set) => ({
   selectedId: null,
-  setSelected: (assetId, version) => set((state) => ({ ...state, selectedId: assetId, selectedVersion: version })),
+  setSelected: (assetId, version) =>
+    set((state) => ({ ...state, selectedId: assetId, selectedVersion: version })),
   selectedVersion: null,
 }));
 

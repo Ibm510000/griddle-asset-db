@@ -1,33 +1,61 @@
-import PropTypes from 'prop-types';
+import useDownloads from '@renderer/hooks/use-downloads';
+import { Asset } from '@renderer/types';
+import { MdCommit } from 'react-icons/md';
+import { DownloadedEntry } from 'src/types/ipc';
 
-const VersionSelector = ({ selectedVersion, setSelectedVersion , allVersions}) => {
-  const versions = allVersions;
+const VersionSelector = ({
+  asset,
+  allVersions,
+  currentVersion,
+}: {
+  asset: Asset;
+  allVersions: string[];
+  currentVersion?: DownloadedEntry;
+}) => {
+  const { syncAsset } = useDownloads();
+
+  if (allVersions.length === 0) {
+    return (
+      <label
+        tabIndex={0}
+        className="flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal text-base-content/50"
+      >
+        <MdCommit />
+        No versions
+      </label>
+    );
+  }
 
   return (
-    <div className="dropdown dropdown-end w-full">
-      <label tabIndex={0} className="btn btn-ghost btn-sm flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal">
-        Version: {selectedVersion}
+    <div className="dropdown w-full">
+      <label
+        tabIndex={0}
+        className="btn btn-ghost btn-sm flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
+      >
+        <MdCommit />v{currentVersion?.semver}
       </label>
-      <ul tabIndex={0} className="menu dropdown-content w-20 rounded-box bg-base-100 p-2 shadow">
-        {versions.map((item, index) => (
-          <li
-            key={index}
-            className={item === selectedVersion ? 'rounded-lg bg-base-300 bg-opacity-60' : ''}
-            onClick={() => setSelectedVersion(item)}
-          >
-            <a>{item}</a>
+      <ul
+        tabIndex={0}
+        className="menu dropdown-content z-10 w-20 rounded-box bg-base-100 p-2 shadow"
+      >
+        {allVersions.map((version, index) => (
+          <li key={index}>
+            <button
+              type="button"
+              className={
+                version === currentVersion?.semver ? 'rounded-lg bg-base-300 bg-opacity-60' : ''
+              }
+              onClick={() =>
+                syncAsset({ uuid: asset.id, asset_name: asset.asset_name, semver: version })
+              }
+            >
+              v{version}
+            </button>
           </li>
         ))}
       </ul>
     </div>
   );
-};
-
-// Prop validation
-VersionSelector.propTypes = {
-  selectedVersion: PropTypes.string.isRequired,
-  setSelectedVersion: PropTypes.func.isRequired,
-  allVersions: PropTypes.array.isRequired,
 };
 
 export default VersionSelector;

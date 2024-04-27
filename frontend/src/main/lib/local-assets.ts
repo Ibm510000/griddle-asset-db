@@ -7,13 +7,15 @@ import fsPromises from 'node:fs/promises';
 import path from 'node:path';
 import { hashElement } from 'folder-hash'
 
-import { DownloadedEntry } from '../../types/ipc';
-import fetchClient from './fetch-client';
-import store from './store';
+import { DownloadedEntry, Version } from '../../types/ipc';
 import { getAuthToken } from './authentication';
+import fetchClient from './fetch-client';
+import store, { griddleFrontendStore } from './store';
+
+// TODO: clean up error handling here + in message-handlers
 
 export function getDownloadFolder() {
-  const downloadPath = store.get('downloadFolder') as string;
+  const downloadPath = griddleFrontendStore.get('storeLocation');
 
   // Ensure the download folder exists
   if (!existsSync(downloadPath)) {
@@ -27,8 +29,51 @@ export function setDownloadFolder(downloadFolder: string) {
   store.set('downloadFolder', downloadFolder);
 }
 
-export function getStoredVersions() {
-  return store.get('versions', []);
+export function getDownloadedVersions() {
+  return store.get('downloadedAssetVersions', []);
+}
+
+export function getDownloadedVersionByID(asset_id: string) {
+  return getDownloadedVersions().find(({ asset_id: id }) => asset_id === id);
+}
+
+function setDownloadedVersion(
+  asset_id: string,
+  { semver, folderName }: Omit<DownloadedEntry, 'asset_id'>,
+) {
+  const downloads = store.get('downloadedAssetVersions');
+
+  const newDownloads = [
+    ...downloads.filter(({ asset_id: id }) => id !== asset_id),
+    { asset_id, semver, folderName },
+  ] satisfies DownloadedEntry[];
+
+  store.set('downloadedAssetVersions', newDownloads);
+}
+
+export async function getFolderHash(filePath: string): Promise<string>{
+  return hashElement(filePath)
+  .then(hash => {
+    return hash['hash'].toString()
+  })
+  .catch(error => {
+    console.error('hashing failed:', error);
+  });
+}
+
+export async function ifFilesChanged(assetName: string, asset_id: string): Promise<boolean> {
+  // compare current with saved hash 
+  const downloads = await getDownloadsJSON()
+  const saved_asset = downloads.find((a) => assetName === a.assetName)
+  const saved_hash = saved_asset ? saved_asset.folderHash : ""
+
+  // what is the current hash
+  const folderName = `${assetName}_${asset_id.substring(0, 8)}/`;
+  const folderPath = path.join(getDownloadFolder(), folderName);
+  const current_hash = await getFolderHash(folderPath)
+  
+  console.log('log: ' + current_hash);
+  return (current_hash !== saved_hash)
 }
 
 export async function getDownloadsJSON(): Promise<{assetName:string, downloadedVersion:string, folderHash:string}[]> {
@@ -95,17 +140,12 @@ export async function createInitialVersion({
 
   // hash new folder
   const current_hash = await getFolderHash(folderPath)
-
-  // add to downloaded file
-  const downloads = await getDownloadsJSON()
-  downloads.push({assetName: asset_name, downloadedVersion: '0.0', folderHash: current_hash})
-  await writeDownloadsJSON(downloads)
   
-  store.set('versions', [...getStoredVersions(), newEntry]);
+  setDownloadedVersion(asset_id, { semver: null, folderName, current_hash });
 }
 
-export async function openFolder(asset_id: string, semver: string | null) {
-  const stored = getStoredVersions().find((v) => v.asset_id === asset_id && v.semver === semver);
+export async function openFolder(asset_id: string) {
+  const stored = getDownloadedVersionByID(asset_id);
   if (!stored) return;
 
   shell.openPath(path.join(getDownloadFolder(), stored.folderName));
@@ -140,27 +180,24 @@ async function zipFolder(sourceFolder: string, zipFilePath: string): Promise<voi
   });
 }
 
-export async function commitChanges(
-  asset_id: string,
-  semver: string | null,
-  message: string,
-  is_major: boolean,
-) {
-  const folderName = getStoredVersions().find(
-    (v) => v.asset_id === asset_id && v.semver === semver,
-  )?.folderName;
-
+/**
+ * Given an asset name, creates and uploads a new "commit", updating
+ * remote and local store to match
+ *
+ * @returns Downloaded asset list, updated
+ */
+export async function commitChanges(asset_id: string, message: string, is_major: boolean) {
+  const folderName = getDownloadedVersionByID(asset_id)?.folderName;
   console.log('folderName', folderName);
 
   if (!folderName) {
-    console.log('no folder name found for', asset_id, semver);
-    return;
+    throw new Error(`no folder name found for asset with id ${asset_id}`);
   }
 
   const asset_name = folderName.split("_")[0]
 
   const sourceFolder = path.join(getDownloadFolder(), folderName);
-  const zipFilePath = path.join(app.getPath('temp'), `${asset_id}_${semver}.zip`);
+  const zipFilePath = path.join(app.getPath('temp'), `${asset_id}_commit.zip`);
   console.log('sourceFolder is: ', sourceFolder); // debug log
   console.log('zipFilePath is: ', zipFilePath);
 
@@ -170,7 +207,7 @@ export async function commitChanges(
   const fileData = new Blob([fileContents], { type: 'application/zip' });
 
   // Uploading Zip file with multipart/form-data
-  const { data, response, error } = await fetchClient.POST('/api/v1/assets/{uuid}/versions', {
+  const result = await fetchClient.POST('/api/v1/assets/{uuid}/versions', {
     params: { path: { uuid: asset_id } },
     body: {
       file: fileData as unknown as string,
@@ -180,39 +217,38 @@ export async function commitChanges(
     headers: { Authorization: `Bearer ${getAuthToken()}` },
     bodySerializer(body) {
       const formData = new FormData();
-      formData.append('file', body.file as unknown as Blob, `${asset_id}_${semver}.zip`);
+      formData.append('file', body.file as unknown as Blob, `${asset_id}_commit.zip`);
       formData.append('message', body.message);
       formData.append('is_major', (body.is_major ?? false).toString());
       return formData;
     },
   });
 
+  const { error, response } = result;
+
   if (error || !response.ok) {
     console.log('error uploading zip file', error, response.status);
     throw new Error(`Failed to upload zip file for asset ${asset_id}`);
   }
 
-  // TODO: make this remove old version entry from store
-  // Update local store with the new version
-  const newVersion = { asset_id, semver, folderName };
-  const versions = getStoredVersions();
-  versions.push(newVersion);
-  store.set('versions', versions);
+  // Update saved hash
+  const new_hash = await getFolderHash(sourceFolder)
+
+  // Update store with currently downloaded version
+  const { semver } = result.data as Version;
+  setDownloadedVersion(asset_id, { semver, folderName, new_hash });
 
   // Clean up the zip file
   await fsPromises.rm(zipFilePath);
 
-  // Update saved hash
-  const new_hash = await getFolderHash(sourceFolder)
-
-  const downloads = await getDownloadsJSON()
-  const newDownloads = downloads.filter((asset) => asset.assetName !== asset_name) // remove prev entry
-  newDownloads.push({assetName: asset_name, downloadedVersion: data.semver!, folderHash: new_hash})
-  await writeDownloadsJSON(newDownloads)
-
-  return store.get('versions', []);
+  return getDownloadedVersions();
 }
 
+/**
+ * Downloads a specified version of an asset, logging it to the local store.
+ *
+ * If the asset is already downloaded, it will be overwritten.
+ */
 export async function downloadVersion({ asset_id, semver }: { asset_id: string; semver: string }) {
   console.log('fetching metadata...');
   let asset_name;
@@ -250,46 +286,30 @@ export async function downloadVersion({ asset_id, semver }: { asset_id: string; 
   // previously had semver in here but probably not necessary
   // const folderName = `${asset_name}_${semver}_${asset_id.substring(0, 8)}/`;
   const folderName = `${asset_name}_${asset_id.substring(0, 8)}/`;
-  // remove old copy of folder 
   const folderPath = path.join(getDownloadFolder(), folderName)
-  await fsPromises.rm(folderPath, {force: true, recursive : true})
+
+  // remove old copy of folder
+  await fsPromises.rm(path.join(getDownloadFolder(), folderName), { force: true, recursive: true });
   await extract(zipFilePath, { dir: folderPath });
 
   console.log('removing zip file...');
   await fsPromises.rm(zipFilePath);
 
-  console.log('marking as done!');
-  store.set('versions', [
-    ...getStoredVersions(),
-    { asset_id, semver, folderName } satisfies DownloadedEntry,
-  ]);
-
   const current_hash = await getFolderHash(folderPath)
-
-  // add to downloads JSON
-  const downloads = await getDownloadsJSON()
-  const newDownloads = downloads.filter((asset) => asset.assetName !== asset_name) // remove prev entry
-  newDownloads.push({assetName: asset_name, downloadedVersion: semver, folderHash: current_hash})
-  await writeDownloadsJSON(newDownloads)
+  console.log('marking as stored!');
+  setDownloadedVersion(asset_id, { semver, folderName, current_hash });
 
   console.log('we made it! check', getDownloadFolder());
+  return getDownloadedVersions();
 }
 
 /**
  * Removes a version from the store and deletes the associated folder
  */
-export async function removeVersion({
-  asset_id,
-  semver,
-  assetName
-}: {
-  asset_id: string;
-  semver: string | null;
-  assetName: string;
-}) {
-  const versions = getStoredVersions();
+export async function unsyncAsset(asset_id: string) {
+  const versions = getDownloadedVersions();
 
-  const stored = versions.find((v) => v.asset_id === asset_id && v.semver === semver);
+  const stored = versions.find((v) => v.asset_id === asset_id);
   if (!stored) return;
 
   // delete folder
@@ -297,13 +317,7 @@ export async function removeVersion({
   await fsPromises.rm(folderPath, { recursive: true });
 
   // remove from store
-  const newVersions = versions.filter((v) => v.asset_id !== asset_id || v.semver !== semver);
+  const newVersions = versions.filter((v) => v.asset_id !== asset_id);
 
-  // remove from downloads JSON
-  const downloads = await getDownloadsJSON()
-  console.log(`remove ${assetName}`)
-  const newDownloads = downloads.filter((asset) => asset.assetName !== assetName)
-  await writeDownloadsJSON(newDownloads)
-  
-  store.set('versions', newVersions);
+  store.set('downloadedAssetVersions', newVersions);
 }
