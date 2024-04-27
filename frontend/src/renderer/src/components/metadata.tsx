@@ -112,6 +112,17 @@ export default function Metadata() {
     });
   };
 
+  const onVersionClick = async (asset, version) => {
+    if (!asset) return;
+
+    if (await ifFilesChanged(asset.asset_name, asset.id)) {
+      if (!confirm(`${asset.asset_name} has uncommitted changed. You will lose your work if you switch versions. \nPress OK to continue without saving.`)) {
+        return;
+      }
+    }
+    syncAsset({ uuid: asset.id, asset_name: asset.asset_name, semver: version });
+  }
+
   if (!asset) {
     return (
       <div className="flex h-full flex-col px-6 py-4">
@@ -323,8 +334,7 @@ export default function Metadata() {
                   <button
                     className={`badge -ml-1 mr-1 font-mono hover:opacity-90 active:scale-90 ${currentVersion?.semver === semver ? 'ring-2 ring-primary' : ''}`}
                     onClick={() => {
-                      // TODO : fix 
-                      syncAsset({ uuid: asset.id, asset_name: asset.asset_name, semver });
+                      onVersionClick(asset, semver)
                     }}
                   >
                     {semver}

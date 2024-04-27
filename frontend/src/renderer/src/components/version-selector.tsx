@@ -59,8 +59,6 @@ const VersionSelector = ({
               }
               onClick={() =>
                 onVersionClick(asset, version)
-                
-                //syncAsset({ uuid: asset.id, asset_name: asset.asset_name, semver: version })
               }
             >
               v{version}
