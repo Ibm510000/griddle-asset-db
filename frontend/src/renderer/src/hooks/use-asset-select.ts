@@ -20,7 +20,7 @@ export const useAssetSelectStore = create<AssetSelectState>((set) => ({
 }));
 
 export function useSelectedAsset() {
-  const selectedId = useAssetSelectStore((state) => state.selectedId)
+  const selectedId = useAssetSelectStore((state) => state.selectedId);
 
   const { data, error, isLoading, isValidating, mutate } = useSWR(
     selectedId !== null ? (['/api/v1/assets/{uuid}', { selectedId }] as const) : null,

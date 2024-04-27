@@ -267,7 +267,7 @@ export default function Metadata() {
             )}
             {/* Update Asset Button */}
             {isDownloaded && (
-              <>          
+              <>
                 <button
                   className="btn btn-ghost btn-sm flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
                   onClick={onOpenFolderClick}
