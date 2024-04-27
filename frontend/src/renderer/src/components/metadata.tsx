@@ -101,19 +101,6 @@ export default function Metadata() {
     refetchSearch();
   };
 
-  const onSelectVersionClick = async (item) => {
-    if (!asset) return;
-
-    if (await ifFilesChanged(asset.asset_name, asset.id)) {
-      if (!confirm(`${asset.asset_name} has uncommitted changed. You will lose your work if you switch versions. \nPress OK to continue without saving.`)) {
-        return;
-      }
-    }
-
-    setSelectedVersion(item)
-    syncAsset({ uuid: asset.id, selectedVersion: item });
-  }
-
   const onOpenFolderClick = async () => {
     if (!asset) return;
 
@@ -336,6 +323,7 @@ export default function Metadata() {
                   <button
                     className={`badge -ml-1 mr-1 font-mono hover:opacity-90 active:scale-90 ${currentVersion?.semver === semver ? 'ring-2 ring-primary' : ''}`}
                     onClick={() => {
+                      // TODO : fix 
                       syncAsset({ uuid: asset.id, asset_name: asset.asset_name, semver });
                     }}
                   >

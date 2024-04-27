@@ -69,7 +69,7 @@ export async function ifFilesChanged(assetName: string, asset_id: string): Promi
     return true
   }
   const saved_hash = saved_asset.folderHash
-  
+
   // what is the current hash
   const folderName = saved_asset.folderName
   const folderPath = path.join(getDownloadFolder(), folderName);
@@ -98,8 +98,8 @@ export async function createInitialVersion({
   console.log('adding to store');
 
   // hash new folder
-  const current_hash = await getFolderHash(folderPath)
-  setDownloadedVersion(asset_id, { semver: null, folderName, current_hash });
+  const folderHash = await getFolderHash(folderPath)
+  setDownloadedVersion(asset_id, { semver: null, folderName, folderHash });
 }
 
 export async function openFolder(asset_id: string) {
@@ -188,11 +188,11 @@ export async function commitChanges(asset_id: string, message: string, is_major:
   }
 
   // Update saved hash
-  const new_hash = await getFolderHash(sourceFolder)
+  const folderHash = await getFolderHash(sourceFolder)
 
   // Update store with currently downloaded version
   const { semver } = result.data as Version;
-  setDownloadedVersion(asset_id, { semver, folderName, new_hash });
+  setDownloadedVersion(asset_id, { semver, folderName, folderHash });
 
   // Clean up the zip file
   await fsPromises.rm(zipFilePath);
@@ -251,9 +251,9 @@ export async function downloadVersion({ asset_id, semver }: { asset_id: string; 
   console.log('removing zip file...');
   await fsPromises.rm(zipFilePath);
 
-  const current_hash = await getFolderHash(folderPath)
+  const folderHash = await getFolderHash(folderPath)
   console.log('marking as stored!');
-  setDownloadedVersion(asset_id, { semver, folderName, current_hash });
+  setDownloadedVersion(asset_id, { semver, folderName, folderHash });
 
   console.log('we made it! check', getDownloadFolder());
   return getDownloadedVersions();

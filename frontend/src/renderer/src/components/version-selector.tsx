@@ -12,7 +12,7 @@ const VersionSelector = ({
   allVersions: string[];
   currentVersion?: DownloadedEntry;
 }) => {
-  const { syncAsset } = useDownloads();
+  const { syncAsset, ifFilesChanged } = useDownloads();
 
   if (allVersions.length === 0) {
     return (
@@ -24,6 +24,18 @@ const VersionSelector = ({
         No versions
       </label>
     );
+  }
+
+  const onVersionClick = async (asset, version) => {
+    if (!asset) return;
+
+    if (await ifFilesChanged(asset.asset_name, asset.id)) {
+      if (!confirm(`${asset.asset_name} has uncommitted changed. You will lose your work if you switch versions. \nPress OK to continue without saving.`)) {
+        return;
+      }
+    }
+
+    syncAsset({ uuid: asset.id, asset_name: asset.asset_name, semver: version })
   }
 
   return (
@@ -46,7 +58,9 @@ const VersionSelector = ({
                 version === currentVersion?.semver ? 'rounded-lg bg-base-300 bg-opacity-60' : ''
               }
               onClick={() =>
-                syncAsset({ uuid: asset.id, asset_name: asset.asset_name, semver: version })
+                onVersionClick(asset, version)
+                
+                //syncAsset({ uuid: asset.id, asset_name: asset.asset_name, semver: version })
               }
             >
               v{version}
