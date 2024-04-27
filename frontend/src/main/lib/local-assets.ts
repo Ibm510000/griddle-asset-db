@@ -39,13 +39,13 @@ export function getDownloadedVersionByID(asset_id: string) {
 
 function setDownloadedVersion(
   asset_id: string,
-  { semver, folderName }: Omit<DownloadedEntry, 'asset_id'>,
+  { semver, folderName, folderHash }: Omit<DownloadedEntry, 'asset_id'>,
 ) {
   const downloads = store.get('downloadedAssetVersions');
 
   const newDownloads = [
     ...downloads.filter(({ asset_id: id }) => id !== asset_id),
-    { asset_id, semver, folderName },
+    { asset_id, semver, folderName, folderHash },
   ] satisfies DownloadedEntry[];
 
   store.set('downloadedAssetVersions', newDownloads);
@@ -53,7 +53,7 @@ function setDownloadedVersion(
 
 export async function getFolderHash(filePath: string): Promise<string>{
   return hashElement(filePath)
-  .then(hash => {
+  .then(hash => { 
     return hash['hash'].toString()
   })
   .catch(error => {
@@ -63,58 +63,18 @@ export async function getFolderHash(filePath: string): Promise<string>{
 
 export async function ifFilesChanged(assetName: string, asset_id: string): Promise<boolean> {
   // compare current with saved hash 
-  const downloads = await getDownloadsJSON()
-  const saved_asset = downloads.find((a) => assetName === a.assetName)
-  const saved_hash = saved_asset ? saved_asset.folderHash : ""
-
-  // what is the current hash
-  const folderName = `${assetName}_${asset_id.substring(0, 8)}/`;
-  const folderPath = path.join(getDownloadFolder(), folderName);
-  const current_hash = await getFolderHash(folderPath)
-  
-  console.log('log: ' + current_hash);
-  return (current_hash !== saved_hash)
-}
-
-export async function getDownloadsJSON(): Promise<{assetName:string, downloadedVersion:string, folderHash:string}[]> {
-  try {
-    const FD = await fsPromises.open(path.join(getDownloadFolder(), 'downloads.json'), 'r')
-    const data = await FD.readFile()
-    await FD.close()
-    return JSON.parse(data.toString())
-  } catch (ENOENT) {
-    return []
+  const downloads = await getDownloadedVersions()
+  const saved_asset = downloads.find((a) => asset_id === a.asset_id)
+  if (saved_asset === undefined) {
+    return true
   }
-}
-
-export async function writeDownloadsJSON(updatedDownloadsJSON: {assetName:string, downloadedVersion:string, folderHash:string}[]) {
-  const FD = await fsPromises.open(path.join(getDownloadFolder(), 'downloads.json'), 'w+')
-  await FD.write(JSON.stringify(updatedDownloadsJSON))
-  await FD.close()
-}
-
-export async function getFolderHash(filePath: string): Promise<string>{
-  return hashElement(filePath)
-  .then(hash => {
-    return hash['hash'].toString()
-  })
-  .catch(error => {
-    console.error('hashing failed:', error);
-  });
-}
-
-export async function ifFilesChanged(assetName: string, asset_id: string): Promise<boolean> {
-  // compare current with saved hash 
-  const downloads = await getDownloadsJSON()
-  const saved_asset = downloads.find((a) => assetName === a.assetName)
-  const saved_hash = saved_asset ? saved_asset.folderHash : ""
-
+  const saved_hash = saved_asset.folderHash
+  
   // what is the current hash
-  const folderName = `${assetName}_${asset_id.substring(0, 8)}/`;
+  const folderName = saved_asset.folderName
   const folderPath = path.join(getDownloadFolder(), folderName);
   const current_hash = await getFolderHash(folderPath)
   
-  console.log('log: ' + current_hash);
   return (current_hash !== saved_hash)
 }
 
@@ -136,11 +96,9 @@ export async function createInitialVersion({
   await fsPromises.mkdir(folderPath, { recursive: true });
 
   console.log('adding to store');
-  const newEntry = { asset_id, semver: null, folderName } satisfies DownloadedEntry;
 
   // hash new folder
   const current_hash = await getFolderHash(folderPath)
-  
   setDownloadedVersion(asset_id, { semver: null, folderName, current_hash });
 }
 
@@ -193,8 +151,6 @@ export async function commitChanges(asset_id: string, message: string, is_major:
   if (!folderName) {
     throw new Error(`no folder name found for asset with id ${asset_id}`);
   }
-
-  const asset_name = folderName.split("_")[0]
 
   const sourceFolder = path.join(getDownloadFolder(), folderName);
   const zipFilePath = path.join(app.getPath('temp'), `${asset_id}_commit.zip`);

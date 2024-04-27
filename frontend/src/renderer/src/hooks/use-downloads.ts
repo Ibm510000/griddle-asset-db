@@ -8,10 +8,6 @@ const fetcher = () => {
   return window.api.ipc('assets:list-downloaded', null).then((response) => response.versions);
 };
 
-const fetcher2 = () => {
-  return window.api.ipc('assets:downloaded-json', null).then((response) => response.downloads);
-};
-
 export default function useDownloads() {
   const {
     data: downloadedVersions,
@@ -112,7 +108,6 @@ export default function useDownloads() {
     error,
     isLoading,
     isValidating,
-    downloads,
     syncAsset,
     unsyncAsset,
     commitChanges,

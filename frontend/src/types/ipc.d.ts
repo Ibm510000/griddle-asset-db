@@ -14,16 +14,13 @@ type DownloadedEntry = {
   // null semver means no associated version
   semver: string | null;
   folderName: string;
+  folderHash: string;
 };
 
 type GriddleIpcSchema = {
   'assets:list-downloaded': {
     request: null;
     response: { versions: DownloadedEntry[] };
-  };
-  'assets:downloaded-json': {
-    request: null;
-    response: { downloads: { assetName: string; downloadedVersion: string; }[] };
   };
   'assets:download-asset': {
     request: { asset_id: string };
