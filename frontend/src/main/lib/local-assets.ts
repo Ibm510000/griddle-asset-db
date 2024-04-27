@@ -61,7 +61,7 @@ export async function getFolderHash(filePath: string): Promise<string>{
   });
 }
 
-export async function ifFilesChanged(assetName: string, asset_id: string): Promise<boolean> {
+export async function ifFilesChanged(asset_id: string): Promise<boolean> {
   // compare current with saved hash 
   const downloads = await getDownloadedVersions()
   const saved_asset = downloads.find((a) => asset_id === a.asset_id)

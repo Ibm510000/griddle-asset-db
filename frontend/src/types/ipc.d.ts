@@ -43,7 +43,7 @@ type GriddleIpcSchema = {
     response: { ok: boolean };
   };
   'assets:files-changed': {
-    request: { assetName: string; asset_id: string};
+    request: { asset_id: string };
     response: { ok: boolean, ifChanged: boolean };
   };
   'assets:open-folder': {

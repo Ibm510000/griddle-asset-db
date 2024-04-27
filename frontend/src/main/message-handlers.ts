@@ -39,8 +39,8 @@ const messageHandlers: MessageHandlers = {
     await commitChanges(asset_id, message, is_major);
     return { ok: true };
   },
-  'assets:files-changed': async (_, { assetName, asset_id }) => {
-    return { ok: true, ifChanged: await ifFilesChanged(assetName, asset_id) };
+  'assets:files-changed': async (_, { asset_id }) => {
+    return { ok: true, ifChanged: await ifFilesChanged(asset_id) };
   },
   'assets:open-folder': async (_, { asset_id }) => {
     console.log(`Opening folder for ${asset_id}`);

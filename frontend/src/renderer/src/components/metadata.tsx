@@ -115,7 +115,7 @@ export default function Metadata() {
   const onVersionClick = async (asset, version) => {
     if (!asset) return;
 
-    if (await ifFilesChanged(asset.asset_name, asset.id)) {
+    if (await ifFilesChanged(asset.id)) {
       if (!confirm(`${asset.asset_name} has uncommitted changed. You will lose your work if you switch versions. \nPress OK to continue without saving.`)) {
         return;
       }
