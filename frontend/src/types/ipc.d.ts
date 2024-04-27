@@ -55,6 +55,10 @@ type GriddleIpcSchema = {
     request: { asset_id: string; semver: string | null };
     response: { ok: boolean; files?: FileDetails[] }; // Modified to include file details
   };
+  'assets:open-usdview' : {
+    request: { file_path: string};
+    response: {ok: boolean};
+  };
 };
 
 export type GriddleIpcKey = keyof GriddleIpcSchema;

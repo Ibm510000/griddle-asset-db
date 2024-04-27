@@ -5,6 +5,7 @@ import {
   downloadVersion,
   getStoredVersions,
   openFolder,
+  openUSDView,
   readContent,
   removeVersion,
 } from './lib/local-assets';
@@ -48,6 +49,11 @@ const messageHandlers: MessageHandlers = {
     const files = await readContent(asset_id, semver);
     return { ok: true, files };
   },
+  'assets:open-usdview': async(_, {file_path}) => {
+    console.log(`Opening USDView for ${file_path}`);
+    await openUSDView(file_path);
+    return {ok: true};
+  }
 };
 
 export default messageHandlers;

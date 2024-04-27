@@ -9,6 +9,8 @@ import { app, shell } from 'electron';
 import fetchClient from './fetch-client';
 import { DownloadedEntry } from '../../types/ipc';
 import archiver from 'archiver';
+import { exec } from 'child_process';
+
 
 const assetsStore = new Store<{ versions: DownloadedEntry[]; downloadFolder: string }>({
   defaults: { versions: [], downloadFolder: path.join(app.getPath('documents'), 'Griddle') },
@@ -250,4 +252,8 @@ export async function removeVersion({
   // remove from store
   const newVersions = versions.filter((v) => v.asset_id !== asset_id || v.semver !== semver);
   assetsStore.set('versions', newVersions);
+}
+
+export async function openUSDView(file_path : string) {
+  exec(`usdview "${file_path}"`)
 }
