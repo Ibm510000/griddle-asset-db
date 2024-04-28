@@ -1,6 +1,6 @@
 import Store from 'electron-store';
 import { existsSync } from 'node:fs';
-import { createWriteStream, readFileSync, readdirSync } from 'fs';
+import { createWriteStream, readFileSync, readdirSync, writeFileSync } from 'fs';
 import fsPromises from 'node:fs/promises';
 import path from 'node:path';
 import extract from 'extract-zip';
@@ -9,6 +9,8 @@ import { app, shell } from 'electron';
 import fetchClient from './fetch-client';
 import { DownloadedEntry } from '../../types/ipc';
 import archiver from 'archiver';
+import { exec } from 'child_process';
+
 
 const assetsStore = new Store<{ versions: DownloadedEntry[]; downloadFolder: string }>({
   defaults: { versions: [], downloadFolder: path.join(app.getPath('documents'), 'Griddle') },
@@ -76,7 +78,7 @@ export async function readContent(asset_id: string, semver: string | null) {
       return {
         name: file,
         path: folderPath,
-        content: readFileSync(path.join(folderPath, file), 'utf-8'), // adjust the encoding as needed
+        content: readFileSync(path.join(folderPath, file), 'utf-8')
       };
     });
 
@@ -250,4 +252,15 @@ export async function removeVersion({
   // remove from store
   const newVersions = versions.filter((v) => v.asset_id !== asset_id || v.semver !== semver);
   assetsStore.set('versions', newVersions);
+}
+
+export async function openUSDView(file_path : string) {
+  exec(`usdview "${file_path}"`);
+}
+
+export async function displayUSDA(file_content : string) {
+  writeFileSync('temp.usda', file_content)
+  exec(`python .\\src\\renderer\\src\\assets\\converter.py`);
+  const content = readFileSync('temp.obj', 'utf-8');
+  return content;
 }

@@ -2,9 +2,11 @@ import type { MessageHandlers } from '../types/ipc';
 import {
   commitChanges,
   createInitialVersion,
+  displayUSDA,
   downloadVersion,
   getStoredVersions,
   openFolder,
+  openUSDView,
   readContent,
   removeVersion,
 } from './lib/local-assets';
@@ -48,6 +50,16 @@ const messageHandlers: MessageHandlers = {
     const files = await readContent(asset_id, semver);
     return { ok: true, files };
   },
+  'assets:open-usdview': async(_, {file_path}) => {
+    console.log(`Opening USDView for ${file_path}`);
+    await openUSDView(file_path);
+    return {ok: true};
+  },
+  'assets:display-usda': async(_, {file_content}) => {
+    console.log(`zipping usda for display`);
+    const content = await displayUSDA(file_content);
+    return {ok: true, content}
+  }
 };
 
 export default messageHandlers;
