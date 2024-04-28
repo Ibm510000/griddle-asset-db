@@ -1,4 +1,5 @@
 import { SubmitHandler, useForm } from 'react-hook-form';
+import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 
 import useAuth from '@renderer/hooks/use-auth';
@@ -30,11 +31,12 @@ export default function UserLoginForm({ afterSubmit }: UserLoginFormProps) {
   // --------------------------------------------
 
   const submitHandler = async (data: UserLoginFormData) => {
-    const result = await login(data.pennkey, data.password);
-
-    if (!result.ok) {
-      // TODO: Show error message
-      alert(result.error);
+    try {
+      await login(data.pennkey, data.password);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? `${err.message}.` : 'Something went wrong committing changes.',
+      );
       return;
     }
 

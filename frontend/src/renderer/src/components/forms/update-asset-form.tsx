@@ -1,4 +1,5 @@
 import { SubmitHandler, useForm } from 'react-hook-form';
+import toast from 'react-hot-toast';
 
 import { useSelectedAsset } from '@renderer/hooks/use-asset-select';
 import useDownloads from '@renderer/hooks/use-downloads';
@@ -42,12 +43,18 @@ export default function UpdateAssetForm({ uuid, afterSubmit }: UpdateAssetFormPr
     }
 
     // Calling fetchClient.POST()
-    await commitChanges({
-      asset_id: uuid,
-      semver: downloaded.semver,
-      message: data.message,
-      is_major: data.is_major,
-    });
+    try {
+      await commitChanges({
+        asset_id: uuid,
+        semver: downloaded.semver,
+        message: data.message,
+        is_major: data.is_major,
+      });
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? `${err.message}.` : 'Something went wrong committing changes.',
+      );
+    }
 
     // refetch selected asset in case it's the one we updated
     mutateSelectedAsset();
