@@ -18,7 +18,8 @@ const thomasImage =
 
 export default function Metadata() {
   const { asset, versions } = useSelectedAsset();
-  const { downloadedVersions, syncAsset, unsyncAsset, ifFilesChanged, isValidating } = useDownloads();
+  const { downloadedVersions, syncAsset, unsyncAsset, ifFilesChanged, isValidating } =
+    useDownloads();
   const refetchSearch = useAssetsSearchRefetch();
 
   // versions for showing asset versions
@@ -112,16 +113,19 @@ export default function Metadata() {
     });
   };
 
-  const onVersionClick = async (asset, version) => {
+  const onVersionClick = async (asset: Asset, semver: string) => {
     if (!asset) return;
 
-    if (await ifFilesChanged(asset.id)) {
-      if (!confirm(`${asset.asset_name} has uncommitted changed. You will lose your work if you switch versions. \nPress OK to continue without saving.`)) {
-        return;
-      }
-    }
-    syncAsset({ uuid: asset.id, asset_name: asset.asset_name, semver: version });
-  }
+    if (
+      (await ifFilesChanged(asset.id)) &&
+      !confirm(
+        `${asset.asset_name} has uncommitted changes. You will lose your work if you switch versions. \nPress OK to continue without saving.`,
+      )
+    )
+      return;
+
+    syncAsset({ uuid: asset.id, asset_name: asset.asset_name, semver });
+  };
 
   if (!asset) {
     return (
@@ -286,11 +290,22 @@ export default function Metadata() {
                     asset={asset}
                     allVersions={allVersions}
                     currentVersion={currentVersion}
+                    setVersion={(semver) => onVersionClick(asset, semver)}
                   />
                   <button
                     className="btn btn-ghost btn-sm flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
                     disabled={isValidating}
-                    onClick={() => unsyncAsset({ uuid: asset.id, assetName: asset.asset_name })}
+                    onClick={async () => {
+                      if (
+                        (await ifFilesChanged(asset.id)) &&
+                        !confirm(
+                          `${asset.asset_name} has uncommitted changes. You will lose your work if you continue. \nPress OK to unsync.`,
+                        )
+                      ) {
+                        return;
+                      }
+                      unsyncAsset({ uuid: asset.id, assetName: asset.asset_name });
+                    }}
                   >
                     <MdSyncDisabled className="h-5 w-5" />
                     Unsync
@@ -333,9 +348,7 @@ export default function Metadata() {
                 <div className="chat-bubble- chat-bubble">
                   <button
                     className={`badge -ml-1 mr-1 font-mono hover:opacity-90 active:scale-90 ${currentVersion?.semver === semver ? 'ring-2 ring-primary' : ''}`}
-                    onClick={() => {
-                      onVersionClick(asset, semver)
-                    }}
+                    onClick={() => onVersionClick(asset, semver)}
                   >
                     {semver}
                   </button>{' '}

@@ -1,19 +1,17 @@
-import useDownloads from '@renderer/hooks/use-downloads';
 import { Asset } from '@renderer/types';
 import { MdCommit } from 'react-icons/md';
 import { DownloadedEntry } from 'src/types/ipc';
 
 const VersionSelector = ({
-  asset,
   allVersions,
   currentVersion,
+  setVersion,
 }: {
   asset: Asset;
   allVersions: string[];
   currentVersion?: DownloadedEntry;
+  setVersion: (semver: string) => void;
 }) => {
-  const { syncAsset, ifFilesChanged } = useDownloads();
-
   if (allVersions.length === 0) {
     return (
       <label
@@ -24,18 +22,6 @@ const VersionSelector = ({
         No versions
       </label>
     );
-  }
-
-  const onVersionClick = async (asset, version) => {
-    if (!asset) return;
-
-    if (await ifFilesChanged(asset.id)) {
-      if (!confirm(`${asset.asset_name} has uncommitted changed. You will lose your work if you switch versions. \nPress OK to continue without saving.`)) {
-        return;
-      }
-    }
-
-    syncAsset({ uuid: asset.id, asset_name: asset.asset_name, semver: version })
   }
 
   return (
@@ -57,9 +43,7 @@ const VersionSelector = ({
               className={
                 version === currentVersion?.semver ? 'rounded-lg bg-base-300 bg-opacity-60' : ''
               }
-              onClick={() =>
-                onVersionClick(asset, version)
-              }
+              onClick={() => setVersion(version)}
             >
               v{version}
             </button>
