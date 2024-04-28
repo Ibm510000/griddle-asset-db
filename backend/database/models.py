@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import Optional
+import enum
+from typing import Literal, Optional, get_args
 from uuid import UUID, uuid4
 
-from sqlalchemy import ForeignKey, Uuid, func
+from sqlalchemy import Enum, ForeignKey, Uuid, func, literal
 from sqlalchemy.orm import Mapped, mapped_column, declarative_base, relationship
 
 Base = declarative_base()
@@ -39,3 +40,26 @@ class Version(Base):
     message: Mapped[str]
 
     file_key: Mapped[str]
+
+
+# school for user model
+School = Literal["sas", "seas", "wharton"]
+
+
+# user class
+class User(Base):
+    __tablename__ = "users"
+
+    pennkey: Mapped[str] = mapped_column(primary_key=True)
+    hashed_password: Mapped[bytes]
+
+    first_name: Mapped[str]
+    last_name: Mapped[str]
+    school: Mapped[School] = mapped_column(
+        Enum(
+            *get_args(School),
+            name="school",
+            create_constraint=True,
+            validate_strings=True
+        )
+    )

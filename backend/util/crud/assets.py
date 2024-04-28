@@ -3,12 +3,13 @@ from typing import Sequence, Literal
 from uuid import uuid4
 from pydantic import BaseModel
 import semver
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
 import csv
 
 from schemas.models import (
     AssetCreate,
+    AssetUpdate,
     VersionCreate,
     Asset as MAsset,
     Version as MVersion,
@@ -54,11 +55,12 @@ def read_assets(
                 *[Asset.asset_name.ilike(f"%{kw}%") for kw in keywords],
             )
         )
-        # check if keywords contain search words
+        # check if keywords or author contain search words
         query = query.filter(
             or_(
                 *asset_name_conditions,
                 *[Asset.keywords.ilike(f"%{kw}%") for kw in keywords],
+                *[Asset.author_pennkey.ilike(f"%{search}%")],
             )
         )
 
@@ -77,6 +79,15 @@ def read_assets(
     return db.execute(query).scalars().all()
 
 
+def read_assets_names(db: Session):
+    # Select all assets in db
+    query = select(Asset.asset_name)
+    # Execute the query and fetch all results
+    asset_names = db.execute(query).scalars().all()
+
+    return asset_names
+
+
 def create_asset(db: Session, asset: AssetCreate, author_pennkey: str):
     db_asset = Asset(
         asset_name=asset.asset_name,
@@ -90,7 +101,7 @@ def create_asset(db: Session, asset: AssetCreate, author_pennkey: str):
     return db_asset
 
 
-def update_asset(db: Session, asset_id: str, asset: AssetCreate):
+def update_asset(db: Session, asset_id: str, asset: AssetUpdate):
     db_asset = (
         db.execute(select(Asset).filter(Asset.id == asset_id).limit(1))
         .scalars()
@@ -98,12 +109,16 @@ def update_asset(db: Session, asset_id: str, asset: AssetCreate):
     )
     if db_asset is None:
         return None
-    db_asset.asset_name = asset.asset_name
     db_asset.keywords = asset.keywords
     db_asset.image_uri = asset.image_uri
     db.commit()
     db.refresh(db_asset)
     return db_asset
+
+
+def remove_asset(db: Session, asset_id: str):
+    db.execute(delete(Asset).where(Asset.id == asset_id))
+    db.commit()
 
 
 def read_asset_exists(db: Session, asset_id: str):
@@ -127,7 +142,7 @@ def read_asset_info(db: Session, asset_id: str):
         .outerjoin(Version, Version.asset_id == Asset.id)
         .filter(Asset.id == asset_id)
         .order_by(Version.date.desc())
-        .limit(3)
+        .limit(10)
     )
     results = db.execute(query).mappings().all()
 

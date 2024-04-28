@@ -4,15 +4,19 @@ import { create } from 'zustand';
 
 import fetchClient from '@renderer/lib/fetch-client';
 import { AssetCreate } from '../types';
+import { getAuthToken } from '@renderer/lib/auth';
 
 interface AssetSelectState {
   selectedId: string | null;
-  setSelected(assetId: string | null): void;
+  setSelected(assetId: string | null, version: string | null): void;
+  selectedVersion: string | null;
 }
 
 export const useAssetSelectStore = create<AssetSelectState>((set) => ({
   selectedId: null,
-  setSelected: (assetId) => set((state) => ({ ...state, selectedId: assetId })),
+  setSelected: (assetId, version) =>
+    set((state) => ({ ...state, selectedId: assetId, selectedVersion: version })),
+  selectedVersion: null,
 }));
 
 export function useSelectedAsset() {
@@ -39,6 +43,7 @@ export function useSelectedAsset() {
       await fetchClient.PUT('/api/v1/assets/{uuid}', {
         params: { path: { uuid: selectedId } },
         body: asset,
+        headers: { Authorization: `Bearer ${await getAuthToken()}` },
       });
       return mutate();
     },

@@ -1,21 +1,22 @@
 import type { MessageHandlers } from '../types/ipc';
+import { getAuthToken, login, logout } from './lib/authentication';
 import {
   commitChanges,
   createInitialVersion,
   displayUSDA,
   downloadVersion,
-  getStoredVersions,
+  getDownloadedVersions,
   openFolder,
   openUSDView,
   readContent,
-  removeVersion,
+  unsyncAsset,
 } from './lib/local-assets';
 
 // Types for these can be found in `src/types/ipc.d.ts`
 const messageHandlers: MessageHandlers = {
   'assets:list-downloaded': async () => {
     // console.log('getting downloaded:', getStoredVersions());
-    return { ok: true, versions: getStoredVersions() };
+    return { ok: true, versions: getDownloadedVersions() };
   },
   'assets:download-asset': async (_, { asset_id }) => {
     // TODO
@@ -31,18 +32,18 @@ const messageHandlers: MessageHandlers = {
     await downloadVersion({ asset_id, semver });
     return { ok: true };
   },
-  'assets:remove-version': async (_, { asset_id, semver }) => {
-    await removeVersion({ asset_id, semver });
+  'assets:remove-download': async (_, { asset_id }) => {
+    await unsyncAsset(asset_id);
     return { ok: true };
   },
-  'assets:commit-changes': async (_, { asset_id, semver, message, is_major }) => {
-    console.log(`Committing changes for ${asset_id}@${semver}`);
-    await commitChanges(asset_id, semver, message, is_major);
+  'assets:commit-changes': async (_, { asset_id, message, is_major }) => {
+    console.log(`Committing changes for ${asset_id}`);
+    await commitChanges(asset_id, message, is_major);
     return { ok: true };
   },
-  'assets:open-folder': async (_, { asset_id, semver }) => {
-    console.log(`Opening folder for ${asset_id}@${semver}`);
-    await openFolder(asset_id, semver);
+  'assets:open-folder': async (_, { asset_id }) => {
+    console.log(`Opening folder for ${asset_id}`);
+    await openFolder(asset_id);
     return { ok: true };
   },
   'assets:read-content': async (_, { asset_id, semver }) => {
@@ -59,7 +60,26 @@ const messageHandlers: MessageHandlers = {
     console.log(`zipping usda for display`);
     const content = await displayUSDA(file_content);
     return {ok: true, content}
-  }
+  },
+  'auth:get-auth-token': async () => {
+    return { authToken: getAuthToken() };
+  },
+  'auth:login': async (_, { pennkey, password }) => {
+    try {
+      await login(pennkey, password);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' };
+    }
+  },
+  'auth:logout': async () => {
+    try {
+      await logout();
+      return { ok: true };
+    } catch (e) {
+      return { ok: false };
+    }
+  },
 };
 
 export default messageHandlers;
