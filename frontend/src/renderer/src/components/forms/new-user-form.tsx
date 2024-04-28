@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 import useAuth from '@renderer/hooks/use-auth';
 import fetchClient from '@renderer/lib/fetch-client';
@@ -42,12 +43,14 @@ export default function NewUserForm({ afterSubmit }: NewUserFormProps) {
   const submitHandler = async (data: NewUserFormData) => {
     // Create the user
     try {
-      await fetchClient.POST('/api/v1/users/', {
+      const { error } = await fetchClient.POST('/api/v1/users/', {
         body: data,
       });
+      if (error) throw new Error(error.detail?.[0].msg);
     } catch (e) {
-      // TODO: Show error message
-      alert(e);
+      toast.error(
+        e instanceof Error ? `${e.message}.` : 'Something went wrong creating an account.',
+      );
       return;
     }
 
