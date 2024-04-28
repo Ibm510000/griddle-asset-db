@@ -1,9 +1,6 @@
 import * as THREE from "three";
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
-import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'; 
 import { useEffect, useState} from "react";
-import { MaterialXLoader } from 'three/examples/jsm/loaders/MaterialXLoader.js';
 import {Canvas} from  'react-three-fiber';
 import {OrbitControls} from '@react-three/drei'
 

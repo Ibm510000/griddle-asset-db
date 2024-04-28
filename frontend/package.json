@@ -34,7 +34,6 @@
     "openapi-typescript": "^6.7.5",
     "theme-change": "^2.5.0",
     "three": "^0.163.0",
-    "three-usdz-loader": "^1.0.7",
     "usd-viewer": "^0.0.0"
   },
   "devDependencies": {
