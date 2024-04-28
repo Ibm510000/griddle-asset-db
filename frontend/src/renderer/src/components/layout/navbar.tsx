@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
-import NavbarFilter, { AssetFilters } from './navbar-filter';
-import { Link } from 'react-router-dom';
-import { useSearchParamsStore } from '@renderer/hooks/use-assets-search';
-import { themeChange } from 'theme-change';
-import ThemeSelector from './theme-selector';
-
 import { CiSearch } from 'react-icons/ci';
+import { MdCreate, MdLogin } from 'react-icons/md';
+import { Link } from 'react-router-dom';
+import { themeChange } from 'theme-change';
+
+import { useSearchParamsStore } from '@renderer/hooks/use-assets-search';
+import useAuth from '@renderer/hooks/use-auth';
+import NavbarFilter, { AssetFilters } from './navbar-filter';
+import ThemeSelector from './theme-selector';
 import UserDropdown from './user-dropdown';
 
 const Navbar = () => {
   const [selectedTheme, setSelectedTheme] = useState('light'); // default theme
+
+  const { loggedIn } = useAuth();
 
   const { search, setSearch } = useSearchParamsStore();
 
@@ -32,8 +36,16 @@ const Navbar = () => {
       {/* Center Group */}
       <div className="flex flex-grow items-center justify-center gap-x-4 ">
         {/* New Asset Button */}
-        <Link className="btn btn-outline" to={'/new-asset'}>
-          + New Asset
+        <Link className="btn btn-outline" to={loggedIn ? '/new-asset' : '/user-login'}>
+          {loggedIn ? (
+            <>
+              <MdCreate /> New Asset
+            </>
+          ) : (
+            <>
+              <MdLogin /> Login
+            </>
+          )}
         </Link>
 
         {/* Search Bar */}

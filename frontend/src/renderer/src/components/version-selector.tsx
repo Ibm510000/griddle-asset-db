@@ -1,6 +1,8 @@
+import useAuth from '@renderer/hooks/use-auth';
 import useDownloads from '@renderer/hooks/use-downloads';
 import { Asset } from '@renderer/types';
 import { MdCommit } from 'react-icons/md';
+import { useNavigate } from 'react-router-dom';
 import { DownloadedEntry } from 'src/types/ipc';
 
 const VersionSelector = ({
@@ -12,6 +14,9 @@ const VersionSelector = ({
   allVersions: string[];
   currentVersion?: DownloadedEntry;
 }) => {
+  const { loggedIn } = useAuth();
+  const navigate = useNavigate();
+
   const { syncAsset } = useDownloads();
 
   if (allVersions.length === 0) {
@@ -45,9 +50,13 @@ const VersionSelector = ({
               className={
                 version === currentVersion?.semver ? 'rounded-lg bg-base-300 bg-opacity-60' : ''
               }
-              onClick={() =>
-                syncAsset({ uuid: asset.id, asset_name: asset.asset_name, semver: version })
-              }
+              onClick={() => {
+                if (!loggedIn) {
+                  navigate('/user-login');
+                  return;
+                }
+                syncAsset({ uuid: asset.id, asset_name: asset.asset_name, semver: version });
+              }}
             >
               v{version}
             </button>

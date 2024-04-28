@@ -1,22 +1,26 @@
 import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { CiEdit } from 'react-icons/ci';
-import { MdFolderOpen, MdSync, MdSyncDisabled } from 'react-icons/md';
-import { Link } from 'react-router-dom';
-import VersionSelector from './version-selector';
+import { MdFolderOpen, MdLogin, MdSync, MdSyncDisabled } from 'react-icons/md';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { useSelectedAsset } from '@renderer/hooks/use-asset-select';
 import { useAssetsSearchRefetch } from '@renderer/hooks/use-assets-search';
+import useAuth from '@renderer/hooks/use-auth';
 import useDownloads from '@renderer/hooks/use-downloads';
 import { getAuthToken } from '@renderer/lib/auth';
 import fetchClient from '@renderer/lib/fetch-client';
 import { encodeThumbnailImage } from '@renderer/lib/image-util';
 import { Asset } from '@renderer/types';
+import VersionSelector from './version-selector';
 
 const thomasImage =
   'data:image/jpg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAgICAgJCAkKCgkNDgwODRMREBARExwUFhQWFBwrGx8bGx8bKyYuJSMlLiZENS8vNUROQj5CTl9VVV93cXecnNEBCAgICAkICQoKCQ0ODA4NExEQEBETHBQWFBYUHCsbHxsbHxsrJi4lIyUuJkQ1Ly81RE5CPkJOX1VVX3dxd5yc0f/CABEIAEAAQAMBIgACEQEDEQH/xAAzAAACAgMBAQAAAAAAAAAAAAAFBgMHAAIEAQgBAQEBAQEBAAAAAAAAAAAAAAQCAwAFBv/aAAwDAQACEAMQAAAA79vZPovDxeK0SVLOzIwgrPo7EGxWgHy7ydS5VV4VkR3NEXJYr4LRV2vUCxKokE5kA5IZlqJOAGYb37jBjtjhuAgkRJWNOlzqyO9UF3W0i3kd/8QALRAAAgEEAQIGAQIHAAAAAAAAAQIDAAQFERIhMQYTIjJBUXEUYQcQFTNSgpH/2gAIAQEAAT8AArVIm6zviezwz+QImmuSobj2Vd/Zo+OM40vLnCF/wEdYrxylxNHDeQopYhQ60nGRA69VPY1xoClFZfJJicbNeFOTDSov27dBUjXN/dSSuzSSyOWZj8k1HgmKcnk0aeB4ZiOxU9DXgPIXVzNd28rMyJGrAk0VoLSivF9t5/hu9IXbRcJR/q1Wz/ooYmCIWZQx3snr+Knu5Fto5RGmm+91+livcZessamZEMgYb36evY1/DhHN3k5APQIY13RFBaC1lbd7jD5KFF5NJayKo+yRUotEjjTiGYAAD8UtzaPavEqB2HZdGsQ9lMkiIApKMhH5FeD7FrOLIKigW5aMRtrqxUaJorWameO3g4MRuXr/AM3WHmeSOUtIX0RrZ3qpJJv6peMZGKqPSAx9GtV4jxrC8EyllWdQ4ZfhgPUKghjZiiwyLIR7/MfVYOzMV1EHLMS42zdzTH4B0KS5R5nh5tzU+0xkaHb3Hv2o579cQzNGioS2idKv5JrF5OIiKOJRuZtmQPv2ntxq4dEv5dMFZogT10SfsfvU+blyMEtsVCmNiVIGwwU63+1RTZVLgKFBXferRpIp0Lt12DUeUma5aG6R44ydCRdAdOvX81ZPJHdp590BHIwLEnso31B30q6waMLlrXhHEYiIGbcrlz6jz+h8ChaPDIzRXNpbweYP7pdiARrq5C9Pmrl8fawsrZITOSEZopBIencqvEAg/bGsdlXu74xKvlxFCVUsznYAGuTUXkjYEdvmlnJbke1Z3LNfXzNE7CJFCLokb49d1a+IZlQJcL5gGtOPf0+996yOemN0zJGebOnrLKInQDWvQazeau76UxMyrGje1DtSV+QaJJ7moJ5LeZJozp0OxS+J4Wj1JasH+eJBFZHOzXcXkxp5Ufz12zfz/8QAIBEAAgICAgIDAAAAAAAAAAAAAQIAEQMSITEiYTJBcv/aAAgBAgEBPwDaZ85Qar8oufMpFm4uQMLELTMLa/UP6ERqUQnyHEyrttOyOJmfVgAG4o8Dv1AxGMNZ56u7m7FgSxmyj7uByJ//xAAkEQABAgUCBwAAAAAAAAAAAAABABECAwQSISIxEBMyQUJhgf/aAAgBAwEBPwBlT095eLZRU0sjpZRy7IiFYqYafqZTpR5hQGk5UqK0w+14qVLuBcjuMnZEambY5QAAwE+OH//Z';
 
 export default function Metadata() {
+  const { loggedIn } = useAuth();
+  const navigate = useNavigate();
+
   const { asset, versions } = useSelectedAsset();
   const { downloadedVersions, syncAsset, unsyncAsset, isValidating } = useDownloads();
   const refetchSearch = useAssetsSearchRefetch();
@@ -58,6 +62,11 @@ export default function Metadata() {
   const handleSaveClick = async (data: UpdateMetadataData) => {
     if (!editedAsset) return;
     if (!asset) return;
+
+    if (!loggedIn) {
+      navigate('/user-login');
+      return;
+    }
 
     // Encode the thumbnail image if it's present
     let image_uri;
@@ -210,7 +219,13 @@ export default function Metadata() {
             />
             <div className="mt-4">
               <button type="submit" className="btn btn-outline">
-                Save
+                {loggedIn ? (
+                  <>Save</>
+                ) : (
+                  <>
+                    <MdLogin /> Login to Save
+                  </>
+                )}
               </button>
             </div>
           </form>
@@ -247,11 +262,23 @@ export default function Metadata() {
                 className="btn btn-outline btn-primary flex w-full flex-row items-center gap-2"
                 disabled={isValidating}
                 onClick={() => {
+                  if (!loggedIn) {
+                    navigate('/user-login');
+                    return;
+                  }
                   syncAsset({ uuid: asset.id, asset_name: asset.asset_name });
                 }}
               >
-                <MdSync />
-                Sync
+                {loggedIn ? (
+                  <>
+                    <MdSync />
+                    Sync
+                  </>
+                ) : (
+                  <>
+                    <MdLogin /> Login to Sync
+                  </>
+                )}
               </button>
             )}
             {/* Update Asset Button */}
@@ -266,9 +293,19 @@ export default function Metadata() {
                 </button>
                 <Link
                   className="btn btn-outline btn-primary mt-2 w-full justify-start"
-                  to={{ pathname: `/update-asset`, search: `?id=${asset.id}` }}
+                  to={{
+                    pathname: loggedIn ? `/update-asset` : '/user-login',
+                    search: `?id=${asset.id}`,
+                  }}
                 >
-                  Commit Changes
+                  {loggedIn ? (
+                    'Commit Changes'
+                  ) : (
+                    <>
+                      <MdLogin />
+                      Login to Commit
+                    </>
+                  )}
                 </Link>
                 <div className="mt-2 grid grid-cols-2">
                   <VersionSelector
@@ -323,6 +360,10 @@ export default function Metadata() {
                   <button
                     className={`badge -ml-1 mr-1 font-mono hover:opacity-90 active:scale-90 ${currentVersion?.semver === semver ? 'ring-2 ring-primary' : ''}`}
                     onClick={() => {
+                      if (!loggedIn) {
+                        navigate('/user-login');
+                        return;
+                      }
                       syncAsset({ uuid: asset.id, asset_name: asset.asset_name, semver });
                     }}
                   >
