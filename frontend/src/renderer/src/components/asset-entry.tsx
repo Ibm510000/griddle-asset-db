@@ -1,10 +1,13 @@
-import { useAssetSelectStore } from '@renderer/hooks/use-asset-select';
-import { Asset } from '@renderer/types';
-import { MdCheckCircle, MdDownload, MdDownloading } from 'react-icons/md';
-
-import useDownloads from '@renderer/hooks/use-downloads';
 import { useState } from 'react';
+import { MdCheckCircle, MdDownload, MdDownloading, MdLogin } from 'react-icons/md';
+
+import { useAssetSelectStore } from '@renderer/hooks/use-asset-select';
+import useAuth from '@renderer/hooks/use-auth';
+import useDownloads from '@renderer/hooks/use-downloads';
+import { Asset } from '@renderer/types';
+
 import funnygif from '../assets/funny.gif';
+import { useNavigate } from 'react-router-dom';
 
 export default function AssetEntry({
   asset: { asset_name, author_pennkey, id, image_uri },
@@ -13,6 +16,9 @@ export default function AssetEntry({
   asset: Asset;
   isDownloaded: boolean;
 }) {
+  const { loggedIn } = useAuth();
+  const navigate = useNavigate();
+
   const { selectedId, setSelected } = useAssetSelectStore();
   const isSelected = selectedId === id;
 
@@ -21,6 +27,11 @@ export default function AssetEntry({
   const [isDownloading, setDownloading] = useState(false);
 
   const onDownloadClick = async () => {
+    if (!loggedIn) {
+      navigate('/user-login');
+      return;
+    }
+
     setDownloading(true);
     await syncAsset({ uuid: id, asset_name });
     setDownloading(false);
@@ -47,9 +58,20 @@ export default function AssetEntry({
             className={`absolute left-2 top-2 rounded-full bg-base-100 p-1 text-xl text-base-content drop-shadow transition-opacity ${isDownloaded ? '' : 'opacity-0 group-hover:opacity-100'}`}
             disabled={isDownloaded || isDownloading}
           >
-            {!isDownloaded && !isDownloading && <MdDownload />}
-            {!isDownloaded && isDownloading && <MdDownloading />}
-            {isDownloaded && <MdCheckCircle />}
+            {isDownloaded ? (
+              <MdCheckCircle />
+            ) : (
+              <>
+                {!loggedIn ? (
+                  <MdLogin />
+                ) : (
+                  <>
+                    {!isDownloading && <MdDownload />}
+                    {isDownloading && <MdDownloading />}
+                  </>
+                )}
+              </>
+            )}
           </button>
         </div>
         <div className="px-1">
