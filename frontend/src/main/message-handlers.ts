@@ -7,6 +7,7 @@ import {
   getDownloadedVersions,
   openFolder,
   unsyncAsset,
+  openHoudini,
 } from './lib/local-assets';
 
 // Types for these can be found in `src/types/ipc.d.ts`
@@ -61,6 +62,11 @@ const messageHandlers: MessageHandlers = {
     } catch (e) {
       return { ok: false };
     }
+  },
+  'assets:open-houdini': async (_, { asset_id }) => {
+    console.log(`Opening Houdini template for ${asset_id}`);
+    await openHoudini(asset_id);
+    return { ok: true };
   },
 };
 

@@ -112,6 +112,17 @@ export default function Metadata() {
     });
   };
 
+  const onOpenHoudiniClick = async () => {
+    if (!asset) return;
+
+    const downloaded = downloadedVersions?.find(({ asset_id }) => asset_id === asset.id);
+    if (!downloaded) return;
+
+    await window.api.ipc('assets:open-houdini', {
+      asset_id: asset.id,
+    });
+  };
+
   if (!asset) {
     return (
       <div className="flex h-full flex-col px-6 py-4">
@@ -263,6 +274,14 @@ export default function Metadata() {
                 >
                   <MdFolderOpen />
                   Open
+                </button>
+                <button
+                  className="btn btn-ghost btn-sm flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
+                  onClick={onOpenHoudiniClick}
+                >
+                  {/* replace with DCC logo icon */}
+                  <MdFolderOpen />
+                  Open in Houdini
                 </button>
                 <Link
                   className="btn btn-outline btn-primary mt-2 w-full justify-start"

@@ -5,6 +5,7 @@ import { createWriteStream } from 'fs';
 import { existsSync } from 'node:fs';
 import fsPromises from 'node:fs/promises';
 import path from 'node:path';
+import process from 'process';
 
 import { DownloadedEntry, Version } from '../../types/ipc';
 import { getAuthToken } from './authentication';
@@ -239,4 +240,55 @@ export async function unsyncAsset(asset_id: string) {
   const newVersions = versions.filter((v) => v.asset_id !== asset_id);
 
   store.set('downloadedAssetVersions', newVersions);
+}
+
+/**
+ * Locates the downloaded asset folder and launches the Update.hip Houdini template
+ */
+const houdini_src = '../dcc/houdini'; // houdini source files' path relative to /frontend
+
+export async function openHoudini(asset_id: string) {
+  const stored = getDownloadedVersionByID(asset_id);
+  if (!stored) return;
+
+  const downloadsFullpath = path.join(getDownloadFolder(), stored.folderName);
+  const assetName = stored.folderName.split('_')[0];
+
+  // NOTE: Have user to set $HFS system environment variable to their houdini installation path prior to using this feature
+  if (!process.env.HFS) return;
+  const houdiniCmd = path.join(process.env.HFS, '/bin/houdini');
+  console.log('Houdini:', houdiniCmd);
+
+  const houdiniTemplate = path.join(process.cwd(), `${houdini_src}/Update.hipnc`);
+  console.log('Template:', houdiniTemplate);
+  const pythonScript = path.join(process.cwd(), `${houdini_src}/launchTemplate.py`);
+  console.log('Python script:', pythonScript);
+
+  const spawn = require("child_process").spawn;
+  const bat = spawn(houdiniCmd, [
+      houdiniTemplate,      // Argument for cmd to carry out the specified file
+      pythonScript,         // Path to your script
+      "-a",                 // First argument
+      assetName,            // n-th argument
+      "-o",
+      downloadsFullpath,
+      "-n",
+      downloadsFullpath
+  ], {
+    shell: true,
+  });
+  
+  bat.stdout.on("data", (data) => {
+    console.log(data.toString());
+  });
+  
+  bat.stderr.on("data", (err) => {
+    console.log(err.toString());
+  });
+  
+  bat.on("exit", (code) => {
+      // Handle exit
+  });
+
+  console.log('Launching Houdini...')
 }

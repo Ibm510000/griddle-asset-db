@@ -57,6 +57,10 @@ type GriddleIpcSchema = {
     request: null;
     response: { ok: boolean };
   };
+  'assets:open-houdini': {
+    request: { asset_id: string };
+    response: { ok: boolean };
+  };
 };
 
 export type GriddleIpcKey = keyof GriddleIpcSchema;
