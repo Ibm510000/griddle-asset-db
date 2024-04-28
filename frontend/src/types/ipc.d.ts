@@ -59,6 +59,10 @@ type GriddleIpcSchema = {
     request: { file_path: string};
     response: {ok: boolean};
   };
+  'assets:zip-usda' : {
+    request: { file: string};
+    response: {ok: boolean; content: Buffer}
+  }
 };
 
 export type GriddleIpcKey = keyof GriddleIpcSchema;

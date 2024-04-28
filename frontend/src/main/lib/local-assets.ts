@@ -78,7 +78,7 @@ export async function readContent(asset_id: string, semver: string | null) {
       return {
         name: file,
         path: folderPath,
-        content: readFileSync(path.join(folderPath, file), 'utf-8'), // adjust the encoding as needed
+        content: readFileSync(path.join(folderPath, file), 'utf-8')
       };
     });
 
@@ -255,5 +255,10 @@ export async function removeVersion({
 }
 
 export async function openUSDView(file_path : string) {
-  exec(`usdview "${file_path}"`)
+  exec(`usdview "${file_path}"`);
+}
+
+export async function zipUSDA(file_path : string) {
+  exec(`usdzip -a "${file_path}" temp.usdz`);
+  return readFileSync("temp.usdz");
 }

@@ -8,6 +8,7 @@ import {
   openUSDView,
   readContent,
   removeVersion,
+  zipUSDA,
 } from './lib/local-assets';
 
 // Types for these can be found in `src/types/ipc.d.ts`
@@ -53,7 +54,12 @@ const messageHandlers: MessageHandlers = {
     console.log(`Opening USDView for ${file_path}`);
     await openUSDView(file_path);
     return {ok: true};
-  }
+  },
+  'assets:zip-usda': async(_, {file}) => {
+    console.log(`zipping ${file} for display`);
+    const content = await zipUSDA(file);
+    return {ok: true, content}
+  },
 };
 
 export default messageHandlers;
