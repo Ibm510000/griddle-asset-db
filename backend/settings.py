@@ -15,3 +15,7 @@ if is_dev:
 DATABASE_URL = os.getenv("DATABASE_URL") or "unset"
 if DATABASE_URL == "unset":
     raise Exception("DATABASE_URL is not set")
+
+SECRET_KEY = os.getenv("SECRET_KEY") or "unset"
+if SECRET_KEY == "unset":
+    raise Exception("SECRET_KEY is not set")

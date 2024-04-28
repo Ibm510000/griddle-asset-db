@@ -1,4 +1,4 @@
-from settings import DATABASE_URL, is_dev
+from settings import DATABASE_URL, is_dev, SECRET_KEY
 
 from fastapi import FastAPI
 from fastapi.concurrency import asynccontextmanager
