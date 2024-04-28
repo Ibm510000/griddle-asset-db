@@ -71,11 +71,7 @@ export default function NewAssetForm({ afterSubmit }: { afterSubmit?: SubmitHand
     let responseData;
     try {
       // Calling fetchClient.POST()
-      const {
-        data: resData,
-        response,
-        error,
-      } = await fetchClient.POST('/api/v1/assets/', {
+      const { data: resData, error } = await fetchClient.POST('/api/v1/assets/', {
         body: {
           asset_name: data.assetName,
           keywords: data.keywords.map(({ keyword }) => keyword).join(','),
@@ -84,10 +80,6 @@ export default function NewAssetForm({ afterSubmit }: { afterSubmit?: SubmitHand
         headers: { Authorization: `Bearer ${await getAuthToken()}` },
       });
       if (error) throw new Error(error?.detail?.[0].msg);
-      if (!response.status.toString().startsWith('2'))
-        throw new Error(
-          `Server responded with error code ${response.status}: ${response.statusText}`,
-        );
 
       responseData = resData;
     } catch (err) {
