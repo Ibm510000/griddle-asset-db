@@ -2,13 +2,13 @@ import type { MessageHandlers } from '../types/ipc';
 import {
   commitChanges,
   createInitialVersion,
+  displayUSDA,
   downloadVersion,
   getStoredVersions,
   openFolder,
   openUSDView,
   readContent,
   removeVersion,
-  zipUSDA,
 } from './lib/local-assets';
 
 // Types for these can be found in `src/types/ipc.d.ts`
@@ -55,11 +55,11 @@ const messageHandlers: MessageHandlers = {
     await openUSDView(file_path);
     return {ok: true};
   },
-  'assets:zip-usda': async(_, {file}) => {
-    console.log(`zipping ${file} for display`);
-    const content = await zipUSDA(file);
+  'assets:display-usda': async(_, {file_content}) => {
+    console.log(`zipping usda for display`);
+    const content = await displayUSDA(file_content);
     return {ok: true, content}
-  },
+  }
 };
 
 export default messageHandlers;

@@ -13,19 +13,17 @@ export default function AssetPreview({ uuid }: AssetPreviewProps) {
   const [error, setError] = useState('');
   const [selectedFile, setSelectedFile] = useState<FileDetails>();
   const [isUSDFile, setIsUSDFile] = useState(false);
-  const [zippedContent, setZippedContent] = useState<Buffer>();
+  const [objContent, setObjContent] = useState('');
 
   const handleSelectedFile = async (fileName) => {
     setSelectedFile(fileName);
 
     if (fileName.name.endsWith('usda') && selectedFile !== undefined) {
       setIsUSDFile(true);
-      const zipped = await window.api.ipc('assets:zip-usda', {
-        file: selectedFile.path + selectedFile.name,
+      const content = await window.api.ipc('assets:display-usda', {
+        file_content: selectedFile.content,
       });
-      if (zipped.ok) {
-        setZippedContent(zipped.content)
-      }
+      setObjContent(content.content)
     } else {
       setIsUSDFile(false);
     }
@@ -81,8 +79,8 @@ export default function AssetPreview({ uuid }: AssetPreviewProps) {
         {selectedFile && isUSDFile && <button onClick={openUSDView} className='btn btn-outline items-center m-2'>Open USDView</button>}
       </div>
 
-      {selectedFile && zippedContent && (
-        <MyThree selectedFile={zippedContent} materialFile="../assets/gold.mtlx" />
+      {selectedFile && objContent && (
+        <MyThree selectedFile={objContent} materialFile="../assets/gold.mtlx" />
       )}
     </div>
   );

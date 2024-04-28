@@ -1,13 +1,14 @@
 import * as THREE from "three";
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'; 
 import { useEffect, useState} from "react";
 import { MaterialXLoader } from 'three/examples/jsm/loaders/MaterialXLoader.js';
 import {Canvas} from  'react-three-fiber';
 import {OrbitControls} from '@react-three/drei'
 
 interface ModelProps {
-  selectedFile: Buffer;
+  selectedFile: string;
   materialFile: string;
 }
 
@@ -19,21 +20,11 @@ function Model({ selectedFile, materialFile }: ModelProps) {
   useEffect(() => {
     // Load the OBJ file
     const objLoader = new OBJLoader();
-    const usdLoader = new USDZLoader();
 
     
     // objLoader.load(selectedFile, (object) => {
       
-      if (selectedFile !== undefined) {
-        setObj(usdLoader.parse(selectedFile));
-      } else {
-        console.log(`empty`);
-      }
-      
-
-      // objLoader.load('../assets/carrot.usdz', (model) => {
-      //   setObj(model);
-      // })
+    setObj(objLoader.parse(selectedFile));
 
       // // Load the MaterialX file if the OBJ has been successfully loaded
       // const matLoader = new MaterialXLoader();
@@ -51,7 +42,7 @@ function Model({ selectedFile, materialFile }: ModelProps) {
   return obj ? <primitive object={obj} /> : null;
 }
 
-function MyThree({ selectedFile, materialFile } : { selectedFile: Buffer, materialFile: string }) {
+function MyThree({ selectedFile, materialFile } : { selectedFile: string, materialFile: string }) {
 
 
   return (

@@ -1,6 +1,6 @@
 import Store from 'electron-store';
 import { existsSync } from 'node:fs';
-import { createWriteStream, readFileSync, readdirSync } from 'fs';
+import { createWriteStream, readFileSync, readdirSync, writeFileSync } from 'fs';
 import fsPromises from 'node:fs/promises';
 import path from 'node:path';
 import extract from 'extract-zip';
@@ -258,7 +258,9 @@ export async function openUSDView(file_path : string) {
   exec(`usdview "${file_path}"`);
 }
 
-export async function zipUSDA(file_path : string) {
-  exec(`usdzip -a "${file_path}" temp.usdz`);
-  return readFileSync("temp.usdz");
+export async function displayUSDA(file_content : string) {
+  writeFileSync('temp.usda', file_content)
+  exec(`python .\\src\\renderer\\src\\assets\\converter.py`);
+  const content = readFileSync('temp.obj', 'utf-8');
+  return content;
 }
