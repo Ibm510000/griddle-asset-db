@@ -8,6 +8,7 @@ import NewAssetView from './routes/new-asset-view';
 import UpdateAssetView from './routes/update-asset-view';
 import UserLoginView from './routes/user-login-view';
 import NewUserView from './routes/new-user-view';
+import { Toaster } from 'react-hot-toast';
 
 const router = createHashRouter([
   {
@@ -37,5 +38,6 @@ const router = createHashRouter([
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <RouterProvider router={router} />
+    <Toaster position="bottom-right" />
   </React.StrictMode>,
 );

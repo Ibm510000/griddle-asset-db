@@ -4,6 +4,7 @@ import { Controller, SubmitHandler, useFieldArray, useForm } from 'react-hook-fo
 import { BiImageAdd } from 'react-icons/bi';
 import { MdCheck, MdDelete } from 'react-icons/md';
 import z from 'zod';
+import { toast } from 'react-hot-toast';
 
 import { useAssetNames } from '@renderer/hooks/use-all-assets';
 import { useAssetsSearchRefetch } from '@renderer/hooks/use-assets-search';
@@ -67,27 +68,35 @@ export default function NewAssetForm({ afterSubmit }: { afterSubmit?: SubmitHand
       return;
     }
 
-    // Calling fetchClient.POST()
-    const {
-      data: resData,
-      response,
-      error,
-    } = await fetchClient.POST('/api/v1/assets/', {
-      body: {
-        asset_name: data.assetName,
-        keywords: data.keywords.map(({ keyword }) => keyword).join(','),
-        image_uri,
-      },
-      headers: { Authorization: `Bearer ${await getAuthToken()}` },
-    });
+    let responseData;
+    try {
+      // Calling fetchClient.POST()
+      const {
+        data: resData,
+        response,
+        error,
+      } = await fetchClient.POST('/api/v1/assets/', {
+        body: {
+          asset_name: data.assetName,
+          keywords: data.keywords.map(({ keyword }) => keyword).join(','),
+          image_uri,
+        },
+        headers: { Authorization: `Bearer ${await getAuthToken()}` },
+      });
+      if (error) throw new Error(error?.detail?.[0].msg);
+      if (!response.status.toString().startsWith('2'))
+        throw new Error(
+          `Server responded with error code ${response.status}: ${response.statusText}`,
+        );
 
-    if (error) throw error;
-    if (!response.status.toString().startsWith('2'))
-      throw new Error(`Non-OK response with code ${response.status}: ${response.statusText}`);
-
+      responseData = resData;
+    } catch (err) {
+      toast.error(err instanceof Error ? `${err.message}.` : 'Something went wrong.');
+      return;
+    }
     // Create initial version for the asset
     await window.api.ipc('assets:create-initial-version', {
-      asset_id: resData.id,
+      asset_id: responseData.id,
       asset_name: data.assetName,
     });
 
@@ -96,7 +105,7 @@ export default function NewAssetForm({ afterSubmit }: { afterSubmit?: SubmitHand
     refetchSearch();
 
     // Call the afterSubmit function provided by props
-    if (afterSubmit) afterSubmit(resData);
+    if (afterSubmit) afterSubmit(responseData);
   };
 
   return (
