@@ -44,7 +44,10 @@ export async function login(pennkey: string, password: string) {
     },
   });
 
-  if (error || response.status !== 200) {
+  if (error) {
+    if (response.status.toString().startsWith('4')) {
+      throw new Error(error.detail as unknown as string);
+    }
     throw new Error('Failed to log in');
   }
 

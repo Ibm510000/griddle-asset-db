@@ -51,7 +51,7 @@ const messageHandlers: MessageHandlers = {
       await login(pennkey, password);
       return { ok: true };
     } catch (e) {
-      return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' };
+      return { ok: false, error: e instanceof Error ? e.message : 'An unknown error occurred' };
     }
   },
   'auth:logout': async () => {
