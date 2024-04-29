@@ -51,7 +51,7 @@ class UserBase(BaseModel):
     first_name: str
     last_name: str
     school: Literal["sas", "seas", "wharton"]
-    picture_uri: Optional[str]
+    picture_uri: Optional[str] = None
 
 
 class UserCreate(UserBase):

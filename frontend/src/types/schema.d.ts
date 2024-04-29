@@ -181,6 +181,8 @@ export interface components {
        * @enum {string}
        */
       school: 'sas' | 'seas' | 'wharton';
+      /** Picture Uri */
+      picture_uri?: string | null;
     };
     /** UserCreate */
     UserCreate: {
@@ -195,6 +197,8 @@ export interface components {
        * @enum {string}
        */
       school: 'sas' | 'seas' | 'wharton';
+      /** Picture Uri */
+      picture_uri?: string | null;
       /** Password */
       password: string;
     };

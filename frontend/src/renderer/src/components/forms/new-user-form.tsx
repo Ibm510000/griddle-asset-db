@@ -6,20 +6,25 @@ import useAuth from '@renderer/hooks/use-auth';
 import fetchClient from '@renderer/lib/fetch-client';
 import Label from '../input/label';
 import TextInput from '../input/text-input';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 
-export interface NewUserFormData {
-  first_name: string; // first name
-  last_name: string; // last name
-  pennkey: string; // pennkey
-  school: 'sas' | 'seas' | 'wharton';
-  password: string; // password
-}
+// TODO: add more robust validation (password length, trimming, etc)
+const newUserFormSchema = z.object({
+  first_name: z.string(),
+  last_name: z.string(),
+  pennkey: z.string(),
+  school: z.enum(['sas', 'seas', 'wharton']),
+  password: z.string(),
+});
 
-interface NewUserFormProps {
+export type NewUserFormData = z.infer<typeof newUserFormSchema>;
+
+export default function NewUserForm({
+  afterSubmit,
+}: {
   afterSubmit?: SubmitHandler<NewUserFormData>;
-}
-
-export default function NewUserForm({ afterSubmit }: NewUserFormProps) {
+}) {
   const { login } = useAuth();
 
   const {
@@ -35,6 +40,7 @@ export default function NewUserForm({ afterSubmit }: NewUserFormProps) {
       school: 'seas',
       password: '',
     },
+    resolver: zodResolver(newUserFormSchema),
   });
 
   // --------------------------------------------
@@ -43,7 +49,11 @@ export default function NewUserForm({ afterSubmit }: NewUserFormProps) {
     // Create the user
     try {
       await fetchClient.POST('/api/v1/users/', {
-        body: data,
+        body: {
+          ...data,
+          // TODO: swap out optional image
+          picture_uri: null,
+        },
       });
     } catch (e) {
       // TODO: Show error message
