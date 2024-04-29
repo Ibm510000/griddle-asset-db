@@ -87,12 +87,12 @@ export interface components {
   schemas: {
     /** Asset */
     Asset: {
-      /** Asset Name */
-      asset_name: string;
       /** Keywords */
       keywords: string;
       /** Image Uri */
       image_uri: string | null;
+      /** Asset Name */
+      asset_name: string;
       /**
        * Id
        * Format: uuid
@@ -103,18 +103,25 @@ export interface components {
     };
     /** AssetCreate */
     AssetCreate: {
-      /** Asset Name */
-      asset_name: string;
       /** Keywords */
       keywords: string;
       /** Image Uri */
       image_uri: string | null;
+      /** Asset Name */
+      asset_name: string;
     };
     /** AssetInfo */
     AssetInfo: {
       asset: components['schemas']['Asset'];
       /** Versions */
       versions: components['schemas']['Version'][];
+    };
+    /** AssetUpdate */
+    AssetUpdate: {
+      /** Keywords */
+      keywords: string;
+      /** Image Uri */
+      image_uri: string | null;
     };
     /** Body_login_for_access_token_api_v1_users_token_post */
     Body_login_for_access_token_api_v1_users_token_post: {
@@ -354,7 +361,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['AssetCreate'];
+        'application/json': components['schemas']['AssetUpdate'];
       };
     };
     responses: {
