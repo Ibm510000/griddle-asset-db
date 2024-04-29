@@ -8,15 +8,12 @@ import { getAuthToken } from '@renderer/lib/auth';
 
 interface AssetSelectState {
   selectedId: string | null;
-  setSelected(assetId: string | null, version: string | null): void;
-  selectedVersion: string | null;
+  setSelected(assetId: string | null): void;
 }
 
 export const useAssetSelectStore = create<AssetSelectState>((set) => ({
   selectedId: null,
-  setSelected: (assetId, version) =>
-    set((state) => ({ ...state, selectedId: assetId, selectedVersion: version })),
-  selectedVersion: null,
+  setSelected: (assetId) => set((state) => ({ ...state, selectedId: assetId })),
 }));
 
 export function useSelectedAsset() {

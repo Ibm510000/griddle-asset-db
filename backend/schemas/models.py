@@ -5,21 +5,16 @@ from datetime import datetime
 
 
 class AssetBase(BaseModel):
+    asset_name: str
     keywords: str
     image_uri: Optional[str]
 
 
 class AssetCreate(AssetBase):
-    asset_name: str
-    pass
-
-
-class AssetUpdate(AssetBase):
     pass
 
 
 class Asset(AssetBase):
-    asset_name: str
     id: UUID
     author_pennkey: str
 

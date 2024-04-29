@@ -33,16 +33,16 @@ type GriddleIpcSchema = {
     request: { asset_id: string; semver: string };
     response: { ok: boolean };
   };
-  'assets:remove-download': {
-    request: { asset_id: string; assetName: string };
+  'assets:remove-version': {
+    request: { asset_id: string; semver: string | null };
     response: { ok: boolean };
   };
   'assets:commit-changes': {
-    request: { asset_id: string; message: string; is_major: boolean };
+    request: { asset_id: string; semver: string | null; message; is_major };
     response: { ok: boolean };
   };
   'assets:open-folder': {
-    request: { asset_id: string };
+    request: { asset_id: string; semver: string | null };
     response: { ok: boolean };
   };
   'auth:get-auth-token': {

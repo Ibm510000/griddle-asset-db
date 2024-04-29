@@ -4,16 +4,17 @@ import {
   commitChanges,
   createInitialVersion,
   downloadVersion,
-  getDownloadedVersions,
+  getStoredVersions,
   openFolder,
-  unsyncAsset,
+  removeVersion,
+  openMaya,
 } from './lib/local-assets';
 
 // Types for these can be found in `src/types/ipc.d.ts`
 const messageHandlers: MessageHandlers = {
   'assets:list-downloaded': async () => {
     // console.log('getting downloaded:', getStoredVersions());
-    return { ok: true, versions: getDownloadedVersions() };
+    return { ok: true, versions: getStoredVersions() };
   },
   'assets:download-asset': async (_, { asset_id }) => {
     // TODO
@@ -29,18 +30,18 @@ const messageHandlers: MessageHandlers = {
     await downloadVersion({ asset_id, semver });
     return { ok: true };
   },
-  'assets:remove-download': async (_, { asset_id }) => {
-    await unsyncAsset(asset_id);
+  'assets:remove-version': async (_, { asset_id, semver }) => {
+    await removeVersion({ asset_id, semver });
     return { ok: true };
   },
-  'assets:commit-changes': async (_, { asset_id, message, is_major }) => {
-    console.log(`Committing changes for ${asset_id}`);
-    await commitChanges(asset_id, message, is_major);
+  'assets:commit-changes': async (_, { asset_id, semver, message, is_major }) => {
+    console.log(`Committing changes for ${asset_id}@${semver}`);
+    await commitChanges(asset_id, semver, message, is_major);
     return { ok: true };
   },
-  'assets:open-folder': async (_, { asset_id }) => {
-    console.log(`Opening folder for ${asset_id}`);
-    await openFolder(asset_id);
+  'assets:open-folder': async (_, { asset_id, semver }) => {
+    console.log(`Opening folder for ${asset_id}@${semver}`);
+    await openFolder(asset_id, semver);
     return { ok: true };
   },
   'auth:get-auth-token': async () => {
@@ -61,6 +62,11 @@ const messageHandlers: MessageHandlers = {
     } catch (e) {
       return { ok: false };
     }
+  },
+  'assets:open-Maya': async (_, { asset_id, semver}) => {
+    console.log(`Committing changes for ${asset_id}@${semver}`);
+    await openMaya(asset_id, semver);
+    return { ok: true };
   },
 };
 

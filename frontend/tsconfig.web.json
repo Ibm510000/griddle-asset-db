@@ -7,7 +7,6 @@
     "src/preload/*.d.ts"
   ],
   "compilerOptions": {
-    // TODO: set "strict": true,
     "composite": true,
     "jsx": "react-jsx",
     "baseUrl": ".",

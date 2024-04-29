@@ -24,7 +24,7 @@ function HomeView(): JSX.Element {
           {/* Main body */}
           <div
             onClick={() => {
-              setSelectedAssetId(null, null);
+              setSelectedAssetId(null);
             }}
             className="relative bg-base-200"
           >

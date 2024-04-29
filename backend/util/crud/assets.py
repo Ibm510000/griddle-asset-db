@@ -9,7 +9,6 @@ import csv
 
 from schemas.models import (
     AssetCreate,
-    AssetUpdate,
     VersionCreate,
     Asset as MAsset,
     Version as MVersion,
@@ -55,12 +54,11 @@ def read_assets(
                 *[Asset.asset_name.ilike(f"%{kw}%") for kw in keywords],
             )
         )
-        # check if keywords or author contain search words
+        # check if keywords contain search words
         query = query.filter(
             or_(
                 *asset_name_conditions,
                 *[Asset.keywords.ilike(f"%{kw}%") for kw in keywords],
-                *[Asset.author_pennkey.ilike(f"%{search}%")],
             )
         )
 
@@ -101,7 +99,7 @@ def create_asset(db: Session, asset: AssetCreate, author_pennkey: str):
     return db_asset
 
 
-def update_asset(db: Session, asset_id: str, asset: AssetUpdate):
+def update_asset(db: Session, asset_id: str, asset: AssetCreate):
     db_asset = (
         db.execute(select(Asset).filter(Asset.id == asset_id).limit(1))
         .scalars()
@@ -109,6 +107,7 @@ def update_asset(db: Session, asset_id: str, asset: AssetUpdate):
     )
     if db_asset is None:
         return None
+    db_asset.asset_name = asset.asset_name
     db_asset.keywords = asset.keywords
     db_asset.image_uri = asset.image_uri
     db.commit()
@@ -142,7 +141,7 @@ def read_asset_info(db: Session, asset_id: str):
         .outerjoin(Version, Version.asset_id == Asset.id)
         .filter(Asset.id == asset_id)
         .order_by(Version.date.desc())
-        .limit(10)
+        .limit(3)
     )
     results = db.execute(query).mappings().all()
 

@@ -15,7 +15,6 @@ boto3 = "*"
 psycopg2 = "*"
 sqladmin = "*"
 python-jose = {extras = ["cryptography"], version = "*"}
-bcrypt = "*"
 
 [dev-packages]
 boto3-stubs = {extras = ["essential"], version = "*"}

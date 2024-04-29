@@ -22,7 +22,7 @@ export default function AssetEntry({
 
   const onDownloadClick = async () => {
     setDownloading(true);
-    await syncAsset({ uuid: id, asset_name });
+    await syncAsset({ uuid: id });
     setDownloading(false);
     await mutateDownloads();
   };
@@ -34,7 +34,7 @@ export default function AssetEntry({
         onClick={(evt) => {
           evt.preventDefault();
           evt.stopPropagation();
-          setSelected(id, null);
+          setSelected(id);
         }}
         className={`group inline-flex h-full w-full flex-col rounded-2xl bg-base-100 p-3 text-left shadow transition-shadow focus-visible:outline-none ${isSelected ? 'ring-2 ring-primary/60 focus-visible:outline-none focus-visible:ring-4' : 'ring-primary/40 focus-visible:ring-4'}`}
       >
