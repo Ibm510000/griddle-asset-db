@@ -26,7 +26,7 @@ from util.crud.assets import (
     remove_asset,
 )
 from database.connection import get_db
-from schemas.models import Asset, AssetCreate, Version, VersionCreate
+from schemas.models import Asset, AssetCreate, AssetUpdate, Version, VersionCreate
 from util.files import save_upload_file_temp
 from util.auth import get_current_user, oauth2_scheme
 
@@ -103,7 +103,7 @@ async def put_asset(
     db: Annotated[Session, Depends(get_db)],
     token: Annotated[str, Depends(oauth2_scheme)],
     uuid: str,
-    asset: AssetCreate,
+    asset: AssetUpdate,
 ):
     result = update_asset(db, uuid, asset)
     if result is None:
@@ -117,8 +117,9 @@ async def put_asset(
     description="Based on `uuid`, deletes a specific asset.",
 )
 async def delete_asset(
+    db: Annotated[Session, Depends(get_db)],
+    token: Annotated[str, Depends(oauth2_scheme)],
     uuid: str,
-    db: Session = Depends(get_db),
 ):
     result = remove_asset(db, uuid)
     if result is False:

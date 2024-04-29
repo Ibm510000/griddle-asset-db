@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { CiEdit } from 'react-icons/ci';
 import { MdFolderOpen, MdSync, MdSyncDisabled } from 'react-icons/md';
 import { Link } from 'react-router-dom';
+import VersionSelector from './version-selector';
 
 import { useSelectedAsset } from '@renderer/hooks/use-asset-select';
 import { useAssetsSearchRefetch } from '@renderer/hooks/use-assets-search';
@@ -20,7 +21,8 @@ export default function Metadata() {
   const { downloadedVersions, syncAsset, unsyncAsset, isValidating } = useDownloads();
   const refetchSearch = useAssetsSearchRefetch();
 
-  // versions also available here for showing asset versions!
+  // versions for showing asset versions
+  const allVersions = versions ? versions.map((v) => v.semver) : [];
 
   const isDownloaded = useMemo(() => {
     return downloadedVersions?.findIndex(({ asset_id }) => asset_id === asset?.id) !== -1;
@@ -33,13 +35,14 @@ export default function Metadata() {
   const [editMode, setEditMode] = useState(false);
   const [editedAsset, setEditedAsset] = useState<Asset | null>(null);
 
-  useEffect(() => {
-    if (!asset) setEditMode(false);
-  }, [asset, setEditMode]);
-
   const { control, handleSubmit } = useForm<UpdateMetadataData>({
     defaultValues: { thumbnailFile: undefined },
   });
+
+  const currentVersion = useMemo(
+    () => downloadedVersions?.find(({ asset_id }) => asset_id === asset?.id),
+    [downloadedVersions, asset?.id],
+  );
 
   const handleEditClick = () => {
     if (!asset) return;
@@ -106,25 +109,8 @@ export default function Metadata() {
 
     await window.api.ipc('assets:open-folder', {
       asset_id: asset.id,
-      semver: downloaded.semver,
     });
   };
-
-  const onOpenMayaClick = async () => {
-    if (!asset) return;
-
-    const downloaded = downloadedVersions?.find(({ asset_id }) => asset_id === asset.id);
-    if (!downloaded) return;
-
-    await window.api.ipc('assets:open-Maya', {
-      asset_id: asset.id,
-      semver: downloaded.semver,
-    });
-  };
-    
-
-
-
 
   if (!asset) {
     return (
@@ -150,19 +136,6 @@ export default function Metadata() {
       {editMode ? (
         <>
           <form onSubmit={handleSubmit(handleSaveClick)}>
-            <div className="mt-4">
-              <label htmlFor="asset_name" className="block text-sm font-medium text-gray-700">
-                Asset Name
-              </label>
-              <input
-                type="text"
-                id="asset_name"
-                className="mt-1 block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                value={editedAsset?.asset_name}
-                onChange={(e) => handleInputChange(e, 'asset_name')}
-                required
-              />
-            </div>
             <div className="mt-4">
               <label htmlFor="keywords" className="block text-sm font-medium text-gray-700">
                 Keywords
@@ -274,7 +247,7 @@ export default function Metadata() {
                 className="btn btn-outline btn-primary flex w-full flex-row items-center gap-2"
                 disabled={isValidating}
                 onClick={() => {
-                  syncAsset({ uuid: asset.id });
+                  syncAsset({ uuid: asset.id, asset_name: asset.asset_name });
                 }}
               >
                 <MdSync />
@@ -291,33 +264,27 @@ export default function Metadata() {
                   <MdFolderOpen />
                   Open
                 </button>
-
-
-
-                <button
-                  className="btn btn-ghost btn-sm flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
-                  onClick={onOpenMayaClick}
-                >
-                  <MdFolderOpen />
-                  Open In Maya
-                </button>
-
                 <Link
                   className="btn btn-outline btn-primary mt-2 w-full justify-start"
                   to={{ pathname: `/update-asset`, search: `?id=${asset.id}` }}
                 >
                   Commit Changes
                 </Link>
-
-
-                <button
-                  className="btn btn-ghost btn-sm mt-2 flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
-                  disabled={isValidating}
-                  onClick={() => unsyncAsset({ uuid: asset.id })}
-                >
-                  <MdSyncDisabled className="h-5 w-5" />
-                  Unsync
-                </button>
+                <div className="mt-2 grid grid-cols-2">
+                  <VersionSelector
+                    asset={asset}
+                    allVersions={allVersions}
+                    currentVersion={currentVersion}
+                  />
+                  <button
+                    className="btn btn-ghost btn-sm flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
+                    disabled={isValidating}
+                    onClick={() => unsyncAsset({ uuid: asset.id, assetName: asset.asset_name })}
+                  >
+                    <MdSyncDisabled className="h-5 w-5" />
+                    Unsync
+                  </button>
+                </div>
               </>
             )}
           </div>
@@ -337,6 +304,7 @@ export default function Metadata() {
             </div>
           </div>
           {/* Last 3 versions */}
+          {/* TODO: add later versions */}
           <ul className="mt-8">
             {versions?.map(({ date, message, semver, author_pennkey }) => (
               <li className="chat chat-start space-y-0.5" key={`${asset.id}_${semver}`}>
@@ -352,7 +320,15 @@ export default function Metadata() {
                   </time>
                 </div>
                 <div className="chat-bubble- chat-bubble">
-                  <span className="badge -ml-1 mr-1 font-mono">{semver}</span> {message}
+                  <button
+                    className={`badge -ml-1 mr-1 font-mono hover:opacity-90 active:scale-90 ${currentVersion?.semver === semver ? 'ring-2 ring-primary' : ''}`}
+                    onClick={() => {
+                      syncAsset({ uuid: asset.id, asset_name: asset.asset_name, semver });
+                    }}
+                  >
+                    {semver}
+                  </button>{' '}
+                  {message}
                 </div>
                 <hr />
               </li>
