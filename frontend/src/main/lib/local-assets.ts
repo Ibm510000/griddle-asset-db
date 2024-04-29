@@ -10,6 +10,7 @@ import { DownloadedEntry } from '../../types/ipc';
 import fetchClient from './fetch-client';
 import store from './store';
 import { getAuthToken } from './authentication';
+import { spawn } from 'child_process';
 
 export function getDownloadFolder() {
   const downloadPath = store.get('downloadFolder') as string;
@@ -55,9 +56,32 @@ export async function createInitialVersion({
 export async function openFolder(asset_id: string, semver: string | null) {
   const stored = getStoredVersions().find((v) => v.asset_id === asset_id && v.semver === semver);
   if (!stored) return;
-
   shell.openPath(path.join(getDownloadFolder(), stored.folderName));
 }
+
+export async function openMaya(asset_id: string, semver: string | null) {
+  const stored = getStoredVersions().find((v) => v.asset_id === asset_id && v.semver === semver);
+  if (!stored) return;
+  
+  const myPath = path.join(getDownloadFolder(), stored.folderName)
+  const pythonPath = path.join(__dirname,"../../../dcc/maya/MayaMiddleScript.py")
+  const cmd = `python ${pythonPath} "${myPath}`;
+   // replace with your command
+  const childProcess = spawn(cmd, [], {
+    shell: true,
+  });
+
+  childProcess.stdout.on('data', (data) => {
+    console.log(data.toString());
+  });
+
+  childProcess.stderr.on('data', (data) => {
+    console.error(data.toString());
+  });
+
+  //shell.openPath(path.join(getDownloadFolder(), stored.folderName));
+}
+
 
 async function zipFolder(sourceFolder: string, zipFilePath: string): Promise<void> {
   return new Promise((resolve, reject) => {

@@ -7,6 +7,7 @@ import {
   getStoredVersions,
   openFolder,
   removeVersion,
+  openMaya,
 } from './lib/local-assets';
 
 // Types for these can be found in `src/types/ipc.d.ts`
@@ -61,6 +62,11 @@ const messageHandlers: MessageHandlers = {
     } catch (e) {
       return { ok: false };
     }
+  },
+  'assets:open-Maya': async (_, { asset_id, semver}) => {
+    console.log(`Committing changes for ${asset_id}@${semver}`);
+    await openMaya(asset_id, semver);
+    return { ok: true };
   },
 };
 

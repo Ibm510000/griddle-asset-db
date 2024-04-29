@@ -57,6 +57,10 @@ type GriddleIpcSchema = {
     request: null;
     response: { ok: boolean };
   };
+  'assets:open-Maya': {
+    request: { asset_id: string; semver: string | null };
+    response: { ok: boolean };
+  };
 };
 
 export type GriddleIpcKey = keyof GriddleIpcSchema;
