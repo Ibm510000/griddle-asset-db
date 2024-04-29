@@ -6,6 +6,7 @@ import { existsSync } from 'node:fs';
 import fsPromises from 'node:fs/promises';
 import path from 'node:path';
 import process from 'process';
+import fs from 'fs';
 
 import { DownloadedEntry, Version } from '../../types/ipc';
 import { getAuthToken } from './authentication';
@@ -243,7 +244,7 @@ export async function unsyncAsset(asset_id: string) {
 }
 
 /**
- * Locates the downloaded asset folder and launches the Update.hip Houdini template
+ * Locates the downloaded asset folder and launches the respective Houdini template
  */
 const houdini_src = '../dcc/houdini'; // houdini source files' path relative to /frontend
 
@@ -254,15 +255,20 @@ export async function openHoudini(asset_id: string) {
   const downloadsFullpath = path.join(getDownloadFolder(), stored.folderName);
   const assetName = stored.folderName.split('_')[0];
 
-  // NOTE: Have user to set $HFS system environment variable to their houdini installation path prior to using this feature
+  // NOTE: Must have user set the $HFS system environment variable to their houdini installation path prior to using this feature
   if (!process.env.HFS) return;
   const houdiniCmd = path.join(process.env.HFS, '/bin/houdini');
-  console.log('Houdini:', houdiniCmd);
+  // console.log('Houdini:', houdiniCmd);
 
-  const houdiniTemplate = path.join(process.cwd(), `${houdini_src}/Update.hipnc`);
-  console.log('Template:', houdiniTemplate);
+  const existsUsdOld = fs.existsSync(path.join(downloadsFullpath, 'root.usda'));
+  const existsUsdNew = fs.existsSync(path.join(downloadsFullpath, `${assetName}.usda`));
+  const houdiniTemplate = (!existsUsdOld && !existsUsdNew) ? 
+    path.join(process.cwd(), `${houdini_src}/CreateNew.hipnc`) : 
+    path.join(process.cwd(), `${houdini_src}/Update.hipnc`);
+  // console.log('Template:', houdiniTemplate);
+  
   const pythonScript = path.join(process.cwd(), `${houdini_src}/launchTemplate.py`);
-  console.log('Python script:', pythonScript);
+  // console.log('Python script:', pythonScript);
 
   const spawn = require("child_process").spawn;
   const bat = spawn(houdiniCmd, [
