@@ -111,6 +111,19 @@ export default function Metadata() {
       asset_id: asset.id,
     });
   };
+  const onOpenMayaClick = async () => {
+    if (!asset) return;
+
+    const downloaded = downloadedVersions?.find(({ asset_id }) => asset_id === asset.id);
+    if (!downloaded) return;
+
+    await window.api.ipc('assets:open-Maya', {
+      asset_id: asset.id,
+      semver: downloaded.semver,
+    });
+  };
+    
+
 
   if (!asset) {
     return (
@@ -264,6 +277,15 @@ export default function Metadata() {
                   <MdFolderOpen />
                   Open
                 </button>
+
+                <button
+                  className="btn btn-ghost btn-sm flex w-full flex-row flex-nowrap items-center justify-start gap-2 text-sm font-normal"
+                  onClick={onOpenMayaClick}
+                >
+                  <MdFolderOpen />
+                  Open In Maya
+                </button>
+
                 <Link
                   className="btn btn-outline btn-primary mt-2 w-full justify-start"
                   to={{ pathname: `/update-asset`, search: `?id=${asset.id}` }}

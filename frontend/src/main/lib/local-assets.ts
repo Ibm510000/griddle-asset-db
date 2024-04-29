@@ -10,7 +10,7 @@ import { DownloadedEntry, Version } from '../../types/ipc';
 import { getAuthToken } from './authentication';
 import fetchClient from './fetch-client';
 import store, { griddleFrontendStore } from './store';
-
+import { spawn } from 'child_process';
 // TODO: clean up error handling here + in message-handlers
 
 export function getDownloadFolder() {
@@ -76,6 +76,29 @@ export async function openFolder(asset_id: string) {
   if (!stored) return;
 
   shell.openPath(path.join(getDownloadFolder(), stored.folderName));
+}
+
+export async function openMaya(asset_id: string) {
+  const stored = getDownloadedVersionByID(asset_id);
+  if (!stored) return;
+  
+  const myPath = path.join(getDownloadFolder(), stored.folderName)
+  const pythonPath = path.join(__dirname,"../../../dcc/maya/MayaMiddleScript.py")
+  const cmd = `python ${pythonPath} "${myPath}`;
+   // replace with your command
+  const childProcess = spawn(cmd, [], {
+    shell: true,
+  });
+
+  childProcess.stdout.on('data', (data) => {
+    console.log(data.toString());
+  });
+
+  childProcess.stderr.on('data', (data) => {
+    console.error(data.toString());
+  });
+
+  //shell.openPath(path.join(getDownloadFolder(), stored.folderName));
 }
 
 async function zipFolder(sourceFolder: string, zipFilePath: string): Promise<void> {

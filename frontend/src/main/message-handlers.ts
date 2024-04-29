@@ -6,6 +6,7 @@ import {
   downloadVersion,
   getDownloadedVersions,
   openFolder,
+  openMaya,
   unsyncAsset,
 } from './lib/local-assets';
 
@@ -41,6 +42,10 @@ const messageHandlers: MessageHandlers = {
   'assets:open-folder': async (_, { asset_id }) => {
     console.log(`Opening folder for ${asset_id}`);
     await openFolder(asset_id);
+    return { ok: true };
+  },
+  'assets:open-Maya': async (_, { asset_id}) => {
+    await openMaya(asset_id);
     return { ok: true };
   },
   'auth:get-auth-token': async () => {

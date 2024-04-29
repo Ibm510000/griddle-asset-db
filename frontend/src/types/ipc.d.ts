@@ -45,6 +45,11 @@ type GriddleIpcSchema = {
     request: { asset_id: string };
     response: { ok: boolean };
   };
+  'assets:open-Maya': {
+    request: { asset_id: string; semver: string | null };
+    response: { ok: boolean };
+  };
+
   'auth:get-auth-token': {
     request: null;
     response: { authToken: string | null };
