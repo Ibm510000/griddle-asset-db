@@ -2,11 +2,10 @@ import archiver from 'archiver';
 import { app, shell } from 'electron';
 import extract from 'extract-zip';
 import { createWriteStream } from 'fs';
-import { existsSync } from 'node:fs';
+import { existsSync, copyFile } from 'node:fs';
 import fsPromises from 'node:fs/promises';
 import path from 'node:path';
-import process from 'process';
-import fs from 'fs';
+import process from 'node:process';
 
 import { DownloadedEntry, Version } from '../../types/ipc';
 import { getAuthToken } from './authentication';
@@ -243,10 +242,18 @@ export async function unsyncAsset(asset_id: string) {
   store.set('downloadedAssetVersions', newVersions);
 }
 
+function getCommandLine() {
+  switch (process.platform) { 
+     case 'darwin' : return 'open ';
+     case 'win32' : return 'start ';
+     default : return 'xdg-open';
+  }
+}
+
 /**
  * Locates the downloaded asset folder and launches the respective Houdini template
  */
-const houdini_src = '../dcc/houdini'; // houdini source files' path relative to /frontend
+const houdini_src = '../dcc/houdini/';
 
 export async function openHoudini(asset_id: string) {
   const stored = getDownloadedVersionByID(asset_id);
@@ -258,43 +265,52 @@ export async function openHoudini(asset_id: string) {
   // NOTE: Must have user set the $HFS system environment variable to their houdini installation path prior to using this feature
   if (!process.env.HFS) return;
   const houdiniCmd = path.join(process.env.HFS, '/bin/houdini');
-  // console.log('Houdini:', houdiniCmd);
 
-  const existsUsdOld = fs.existsSync(path.join(downloadsFullpath, 'root.usda'));
-  const existsUsdNew = fs.existsSync(path.join(downloadsFullpath, `${assetName}.usda`));
-  const houdiniTemplate = (!existsUsdOld && !existsUsdNew) ? 
-    path.join(process.cwd(), `${houdini_src}/CreateNew.hipnc`) : 
-    path.join(process.cwd(), `${houdini_src}/Update.hipnc`);
-  // console.log('Template:', houdiniTemplate);
+  const { spawn, exec } = require("child_process");
+
+  // If there's an existing Houdini file, open it.
+  const destination = path.join(downloadsFullpath, `${assetName}.hipnc`);
+  if (existsSync(destination)) {
+    exec(getCommandLine() + destination);
+    console.log(`Launching the existing Houdini file for ${asset_id}...`);
+  } 
+  // Otherwise, load asset in a new template.
+  else {
+    const existsUsdOld = existsSync(path.join(downloadsFullpath, 'root.usda'));
+    const existsUsdNew = existsSync(path.join(downloadsFullpath, `${assetName}.usda`));
+    const houdiniTemplate = (!existsUsdOld && !existsUsdNew) ? 'CreateNew.hipnc' : 'Update.hipnc';
+    const templateFullpath = path.join(process.cwd(), `${houdini_src}${houdiniTemplate}`);
   
-  const pythonScript = path.join(process.cwd(), `${houdini_src}/launchTemplate.py`);
-  // console.log('Python script:', pythonScript);
-
-  const spawn = require("child_process").spawn;
-  const bat = spawn(houdiniCmd, [
-      houdiniTemplate,      // Argument for cmd to carry out the specified file
-      pythonScript,         // Path to your script
-      "-a",                 // First argument
-      assetName,            // n-th argument
+    // Copy template to asset's folder so we don't always edit on the same file
+    copyFile(templateFullpath, destination, (err) => {
+      if (err) throw err;
+      console.log(`${houdiniTemplate} was copied to ${destination}`);
+    });
+    
+    const pythonScript = path.join(process.cwd(), `${houdini_src}/launchTemplate.py`);
+  
+    // Launch houdini with a python session attached
+    const bat = spawn(houdiniCmd, [
+      destination,      // Argument for cmd to carry out the specified file
+      pythonScript,     // Path to your script
+      "-a",             // First argument
+      assetName,        // n-th argument
       "-o",
       downloadsFullpath,
       "-n",
       downloadsFullpath
-  ], {
-    shell: true,
-  });
+    ], {
+      shell: true,
+    });
+    
+    bat.stdout.on("data", (data) => {
+      console.log(data.toString());
+    });
+    
+    bat.stderr.on("data", (err) => {
+      console.log(err.toString());
+    });
   
-  bat.stdout.on("data", (data) => {
-    console.log(data.toString());
-  });
-  
-  bat.stderr.on("data", (err) => {
-    console.log(err.toString());
-  });
-  
-  bat.on("exit", (code) => {
-      // Handle exit
-  });
-
-  console.log('Launching Houdini...')
+    console.log(`Launching Houdini template for ${asset_id}...`);  
+  }
 }

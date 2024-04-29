@@ -45,8 +45,8 @@ if __name__ == "__main__":
             new_asset_directory.set(args.new)
 
             # set this node as the current selected and display output in viewport
-            class_structure_node.setDisplayFlag(True)
             class_structure_node.setCurrent(True, True)
+            class_structure_node.setDisplayFlag(True)
 
         # assets in new houdini structure
         elif is_houdini_asset_structure(source_folder):
@@ -57,9 +57,9 @@ if __name__ == "__main__":
             asset_root_directory = new_structure_node.parm("asset_root_directory")
             asset_name.set(assetname)
             asset_root_directory.set(source_folder)
-            
+
+            new_structure_node.setCurrent(True, True)            
             new_structure_node.setDisplayFlag(True)
-            new_structure_node.setCurrent(True, True)
 
         # launching CreateNew.hipnc template
         else:
@@ -72,5 +72,5 @@ if __name__ == "__main__":
             asset_name.set(assetname)
             asset_root_directory.set(source_folder)
 
-            create_asset_node.setDisplayFlag(True)
             create_asset_node.setCurrent(True, True)
+            create_asset_node.setDisplayFlag(True)

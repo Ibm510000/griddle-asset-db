@@ -64,7 +64,6 @@ const messageHandlers: MessageHandlers = {
     }
   },
   'assets:open-houdini': async (_, { asset_id }) => {
-    console.log(`Opening Houdini template for ${asset_id}`);
     await openHoudini(asset_id);
     return { ok: true };
   },
