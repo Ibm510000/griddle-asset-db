@@ -32,13 +32,22 @@ export default function UserLoginForm({ afterSubmit }: UserLoginFormProps) {
 
   const submitHandler = async (data: UserLoginFormData) => {
     try {
-      await login(data.pennkey, data.password);
+      const result = await login(data.pennkey, data.password);
+      // check if login is incorrect  
+      if (!result.ok) {
+        // Show error message
+        toast.error(result.error); 
+      }
     } catch (err) {
       toast.error(
         err instanceof Error ? `${err.message}.` : 'Something went wrong committing changes.',
       );
       return;
     }
+
+   
+
+    
 
     if (afterSubmit) afterSubmit(data); // Call the onSubmit function provided by props
   };

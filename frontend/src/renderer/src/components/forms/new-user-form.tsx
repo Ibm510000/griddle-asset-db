@@ -46,6 +46,8 @@ export default function NewUserForm({ afterSubmit }: NewUserFormProps) {
       const { error } = await fetchClient.POST('/api/v1/users/', {
         body: data,
       });
+      // TO DO: check if user already exists 
+      // show error message like alert(error.detail) but w toast 
       if (error) throw new Error(error.detail?.[0].msg);
     } catch (e) {
       toast.error(
