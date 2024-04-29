@@ -62,6 +62,7 @@ export default function NewUserForm({ afterSubmit }: NewUserFormProps) {
       alert(result.error);
       return;
     }
+    toast.success('Successfully logged in!');
 
     if (afterSubmit) afterSubmit(data); // Call the onSubmit function provided by props
   };
